@@ -1,4 +1,6 @@
 {
+"update_url": "https://clients2.google.com/service/update2/crx",
+
   "action": {
     "default_icon": {
       "16": "img/icon_16.png",
@@ -54,22 +56,22 @@
       },
       {
         "id": "adguard-mobile",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/adguard-mobile.json"
       },
       {
         "id": "block-lan",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/block-lan.json"
       },
       {
         "id": "dpollock-0",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/dpollock-0.json"
       },
       {
         "id": "adguard-spyware-url",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/adguard-spyware-url.json"
       },
       {
@@ -79,42 +81,42 @@
       },
       {
         "id": "annoyances-cookies",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-cookies.json"
       },
       {
         "id": "annoyances-overlays",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-overlays.json"
       },
       {
         "id": "annoyances-social",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-social.json"
       },
       {
         "id": "annoyances-widgets",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-widgets.json"
       },
       {
         "id": "annoyances-others",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-others.json"
       },
       {
         "id": "annoyances-notifications",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/annoyances-notifications.json"
       },
       {
         "id": "ublock-experimental",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/ublock-experimental.json"
       },
       {
         "id": "ubol-tests",
-        "enabled": false,
+        "enabled": true,
         "path": "/rulesets/main/ubol-tests.json"
       },
       {

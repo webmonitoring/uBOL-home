@@ -215,7 +215,7 @@
  {
   "id": "dpollock-0",
   "name": "Dan Pollock’s hosts file",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://someonewhocares.org/hosts/",
   "filters": {
    "total": 12082,
@@ -296,7 +296,7 @@
   "id": "annoyances-cookies",
   "name": "EasyList/uBO – Cookie Notices",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 2131,
@@ -322,7 +322,7 @@
   "id": "annoyances-overlays",
   "name": "EasyList/uBO – Overlay Notices",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 469,
@@ -348,7 +348,7 @@
   "id": "annoyances-social",
   "name": "EasyList – Social Widgets",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 666,
@@ -374,7 +374,7 @@
   "id": "annoyances-widgets",
   "name": "EasyList – Chat Widgets",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 231,
@@ -401,7 +401,7 @@
   "id": "annoyances-others",
   "name": "EasyList – Other Annoyances",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 746,
@@ -427,7 +427,7 @@
   "id": "annoyances-notifications",
   "name": "EasyList – Notifications",
   "group": "annoyances",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/easylist/easylist#fanboy-lists",
   "filters": {
    "total": 476,
@@ -452,7 +452,7 @@
  {
   "id": "ublock-experimental",
   "name": "uBlock filters – Experimental",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://github.com/uBlockOrigin/uAssets",
   "filters": {
    "total": 0,
@@ -478,7 +478,7 @@
  {
   "id": "ubol-tests",
   "name": "uBO Lite Test Filters",
-  "enabled": false,
+  "enabled": true,
   "homeURL": "https://ublockorigin.github.io/uBOL-home/tests/test-filters.html",
   "filters": {
    "total": 10,

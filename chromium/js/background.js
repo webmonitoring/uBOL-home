@@ -68,11 +68,9 @@ import {
 } from './ext.js';
 
 import {
-    defaultConfig,
-    loadRulesetConfig,
-    process,
+    defaultConfig, process,
     rulesetConfig,
-    saveRulesetConfig,
+    saveRulesetConfig
 } from './config.js';
 
 import {
@@ -722,7 +720,7 @@ async function startSession() {
 /******************************************************************************/
 
 async function start() {
-    await loadRulesetConfig();
+    // await loadRulesetConfig();
 
     if ( process.wakeupRun === false ) {
         await startSession();
