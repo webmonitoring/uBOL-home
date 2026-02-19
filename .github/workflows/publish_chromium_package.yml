@@ -23,6 +23,8 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository
       )
     runs-on: ubuntu-latest
+    env:
+      MONOREPO_REPOSITORY: ${{ vars.MONOREPO_REPOSITORY || 'webmonitoring/monorepo' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,6 +71,7 @@ jobs:
 
       - name: Publish package
         if: steps.exists.outputs.already_published != 'true'
+        id: publish
         working-directory: chromium
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PACKAGE_UPLOAD_TOKEN }}
@@ -77,3 +80,36 @@ jobs:
       - name: Skip publish (already exists)
         if: steps.exists.outputs.already_published == 'true'
         run: echo "Version ${{ steps.version.outputs.version }} already published. Skipping."
+
+      - name: Open monorepo issue for renderer release
+        if: steps.exists.outputs.already_published != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MONOREPO_ISSUE_TOKEN || secrets.WM_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ISSUE_TITLE="Create renderer release for uBOL $VERSION"
+          ISSUE_BODY="$(printf '%s\n' \
+            "A new Chromium uBOL package has been published and renderer should be updated." \
+            "" \
+            "- Package: \`@webmonitoring/ublock-origin-lite-chromium\`" \
+            "- Version: \`$VERSION\`" \
+            "" \
+            "Please implement the following in monorepo:" \
+            "" \
+            "1. Update \`screenshot-worker/package.json\` dependency aliases with a new entry:" \
+            "   \`\"ubol-$VERSION\": \"npm:@webmonitoring/ublock-origin-lite-chromium@$VERSION\"\`" \
+            "2. Run install to refresh lockfile (recommended: \`npm install\` in \`screenshot-worker/\`)." \
+            "3. Commit updated lockfile (for example \`package-lock.json\`) if changed." \
+            "4. Add a new renderer version in \`vp-common/src/Types/BaseTypes/JobRendererVersion.ts\`." \
+            "5. Wire it in \`vp-common/src/Types/BaseTypes/JobRenderer.ts\` as an experimental renderer setting using the new extension version." \
+            "" \
+            "Done criteria:" \
+            "- Dependency alias points to \`@$VERSION\`" \
+            "- Lockfile is updated and committed if install changed it" \
+            "- Renderer types compile and include the new experimental version" \
+          )"
+
+          gh issue create \
+            --repo "$MONOREPO_REPOSITORY" \
+            --title "$ISSUE_TITLE" \
+            --body "$ISSUE_BODY"
