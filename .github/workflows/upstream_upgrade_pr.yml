@@ -1,0 +1,189 @@
+name: upstream_upgrade_pr
+
+on:
+  repository_dispatch:
+    types:
+      - upstream_release
+  workflow_dispatch:
+    inputs:
+      allow_prerelease:
+        description: Process beta/prerelease tags
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      patch_branch:
+        description: Branch containing webmonitoring patches
+        required: false
+        default: wm/patches
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: webmonitoring-upstream-upgrade-pr
+  cancel-in-progress: false
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_REMOTE: upstream
+      UPSTREAM_URL: https://github.com/uBlockOrigin/uBOL-home.git
+      MAIN_BRANCH: main
+      PATCH_BRANCH: ${{ github.event.client_payload.patch_branch || github.event.inputs.patch_branch || 'wm/patches' }}
+      ALLOW_PRERELEASE: ${{ github.event.client_payload.allow_prerelease || github.event.inputs.allow_prerelease || 'false' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch origin and upstream refs
+        run: |
+          git remote add "$UPSTREAM_REMOTE" "$UPSTREAM_URL" 2>/dev/null || true
+          git fetch origin --prune
+          git fetch "$UPSTREAM_REMOTE" --tags --prune
+
+      - name: Validate patch branch exists on origin
+        run: |
+          PATCH_BRANCH="${PATCH_BRANCH:-wm/patches}"
+          if ! git ls-remote --exit-code --heads origin "$PATCH_BRANCH" >/dev/null 2>&1; then
+            echo "Remote patch branch origin/$PATCH_BRANCH does not exist."
+            echo "Create it first (for example: git push -u origin $PATCH_BRANCH)."
+            exit 1
+          fi
+
+      - name: Detect latest upstream tag and type
+        id: detect
+        run: |
+          PATCH_BRANCH="${PATCH_BRANCH:-wm/patches}"
+          ALLOW_PRERELEASE="${ALLOW_PRERELEASE:-false}"
+
+          latest_tag="$(git describe --tags --abbrev=0 "$UPSTREAM_REMOTE/$MAIN_BRANCH")"
+          release_kind="stable"
+
+          if [[ "$latest_tag" == *"-beta"* ]]; then
+            release_kind="beta"
+          fi
+
+          api_json="$(curl -fsSL -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/tags/$latest_tag" || true)"
+          api_prerelease="$(jq -r '.prerelease // empty' <<< "$api_json")"
+          if [[ "$api_prerelease" == "true" ]]; then
+            release_kind="beta"
+          elif [[ "$api_prerelease" == "false" ]]; then
+            release_kind="stable"
+          fi
+
+          if [[ "$release_kind" == "beta" && "$ALLOW_PRERELEASE" != "true" ]]; then
+            echo "Skipping beta tag $latest_tag because ALLOW_PRERELEASE=false"
+            echo "should_continue=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_continue=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "release_kind=$release_kind" >> "$GITHUB_OUTPUT"
+          echo "patch_branch=$PATCH_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Skip info
+        if: steps.detect.outputs.should_continue != 'true'
+        run: |
+          echo "No upgrade PR created."
+          echo "Latest upstream tag is ${{ steps.detect.outputs.latest_tag }} (${{ steps.detect.outputs.release_kind }})."
+
+      - name: Check if tag already processed
+        if: steps.detect.outputs.should_continue == 'true'
+        id: marker
+        run: |
+          marker_tag="ci/upstream-seen/${{ steps.detect.outputs.latest_tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$marker_tag" >/dev/null 2>&1; then
+            echo "already_processed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_processed=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "marker_tag=$marker_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Exit when this tag is already processed
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed == 'true'
+        run: |
+          echo "Tag ${{ steps.detect.outputs.latest_tag }} was already processed. Nothing to do."
+
+      - name: Fast-forward main from upstream/main
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true'
+        run: |
+          git checkout -B "$MAIN_BRANCH" "origin/$MAIN_BRANCH"
+          before_sha="$(git rev-parse HEAD)"
+          git merge --ff-only "$UPSTREAM_REMOTE/$MAIN_BRANCH"
+          after_sha="$(git rev-parse HEAD)"
+          if [[ "$before_sha" != "$after_sha" ]]; then
+            git push origin "$MAIN_BRANCH"
+            echo "Updated origin/$MAIN_BRANCH: $before_sha -> $after_sha"
+          else
+            echo "$MAIN_BRANCH already up to date."
+          fi
+
+      - name: Check if PR is needed
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true'
+        id: pr_needed
+        run: |
+          patch_branch="${{ steps.detect.outputs.patch_branch }}"
+          ahead_count="$(git rev-list --count "origin/$patch_branch..$MAIN_BRANCH")"
+          if [[ "$ahead_count" -eq 0 ]]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "No new commits to merge from $MAIN_BRANCH into $patch_branch."
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "Found $ahead_count commit(s) to merge from $MAIN_BRANCH into $patch_branch."
+          fi
+
+      - name: Open or update upgrade PR
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true' && steps.pr_needed.outputs.needed == 'true'
+        run: |
+          patch_branch="${{ steps.detect.outputs.patch_branch }}"
+          latest_tag="${{ steps.detect.outputs.latest_tag }}"
+          release_kind="${{ steps.detect.outputs.release_kind }}"
+
+          title="Upgrade UBOL to $latest_tag"
+          body="$(cat <<EOF
+Automated upstream upgrade PR.
+
+- Upstream tag: \`$latest_tag\`
+- Release type: \`$release_kind\`
+- Merge direction: \`$MAIN_BRANCH\` -> \`$patch_branch\`
+
+This PR was opened by \`upstream_upgrade_pr.yml\`.
+EOF
+)"
+
+          existing_pr="$(gh pr list \
+            --state open \
+            --base "$patch_branch" \
+            --head "$MAIN_BRANCH" \
+            --json number \
+            --jq '.[0].number')"
+
+          if [[ -n "$existing_pr" && "$existing_pr" != "null" ]]; then
+            gh pr edit "$existing_pr" --title "$title" --body "$body"
+            echo "Updated existing PR #$existing_pr"
+          else
+            gh pr create --base "$patch_branch" --head "$MAIN_BRANCH" --title "$title" --body "$body"
+            echo "Created new upgrade PR"
+          fi
+
+      - name: Mark upstream tag as processed
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true'
+        run: |
+          git tag "${{ steps.marker.outputs.marker_tag }}" "$MAIN_BRANCH"
+          git push origin "refs/tags/${{ steps.marker.outputs.marker_tag }}"
