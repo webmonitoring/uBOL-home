@@ -22,7 +22,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  issues: write
 
 concurrency:
   group: webmonitoring-upstream-upgrade-pr
@@ -32,7 +32,7 @@ jobs:
   upgrade:
     permissions:
       contents: write
-      pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     env:
       UPSTREAM_REMOTE: upstream
@@ -102,7 +102,7 @@ jobs:
       - name: Skip info
         if: steps.detect.outputs.should_continue != 'true'
         run: |
-          echo "No upgrade PR created."
+          echo "No upgrade issue created."
           echo "Latest upstream tag is ${{ steps.detect.outputs.latest_tag }} (${{ steps.detect.outputs.release_kind }})."
 
       - name: Check if tag already processed
@@ -136,53 +136,72 @@ jobs:
             echo "$MAIN_BRANCH already up to date."
           fi
 
-      - name: Check if PR is needed
+      - name: Check if integration issue is needed
         if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true'
-        id: pr_needed
+        id: issue_needed
         run: |
           patch_branch="${{ steps.detect.outputs.patch_branch }}"
           ahead_count="$(git rev-list --count "origin/$patch_branch..$MAIN_BRANCH")"
           if [[ "$ahead_count" -eq 0 ]]; then
             echo "needed=false" >> "$GITHUB_OUTPUT"
-            echo "No new commits to merge from $MAIN_BRANCH into $patch_branch."
+            echo "No new commits to integrate from $MAIN_BRANCH into $patch_branch."
           else
             echo "needed=true" >> "$GITHUB_OUTPUT"
-            echo "Found $ahead_count commit(s) to merge from $MAIN_BRANCH into $patch_branch."
+            echo "Found $ahead_count commit(s) to integrate from $MAIN_BRANCH into $patch_branch."
           fi
 
-      - name: Open or update upgrade PR
-        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true' && steps.pr_needed.outputs.needed == 'true'
+      - name: Open or update upgrade issue
+        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true' && steps.issue_needed.outputs.needed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.MONOREPO_ISSUE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           patch_branch="${{ steps.detect.outputs.patch_branch }}"
           latest_tag="${{ steps.detect.outputs.latest_tag }}"
           release_kind="${{ steps.detect.outputs.release_kind }}"
+          repo="${{ github.repository }}"
 
-          title="Upgrade UBOL to $latest_tag"
+          title="Integrate upstream UBOL $latest_tag into $patch_branch"
           body="$(printf '%s\n' \
-            "Automated upstream upgrade PR." \
+            "Automated upstream integration request." \
             "" \
             "- Upstream tag: \`$latest_tag\`" \
             "- Release type: \`$release_kind\`" \
-            "- Merge direction: \`$MAIN_BRANCH\` -> \`$patch_branch\`" \
+            "- Source branch: \`$MAIN_BRANCH\`" \
+            "- Target branch: \`$patch_branch\`" \
             "" \
-            "This PR was opened by \`upstream_upgrade_pr.yml\`." \
+            "Current workflow state:" \
+            "- \`main\` was synced from \`upstream/main\`." \
+            "- New upstream commits are ready to be integrated into \`$patch_branch\`." \
+            "" \
+            "Goal:" \
+            "- Merge \`main\` into \`$patch_branch\` to bring upstream changes into our patched branch." \
+            "" \
+            "Required work:" \
+            "1. Merge \`main\` into \`$patch_branch\`." \
+            "2. Resolve any merge conflicts." \
+            "3. Ensure the branch is in a releasable state after conflict resolution." \
+            "" \
+            "Please assign this task to Copilot for conflict resolution and integration support." \
+            "" \
+            "This issue was opened by \`upstream_upgrade_pr.yml\`." \
           )"
 
-          existing_pr="$(gh pr list \
+          existing_issue="$(gh issue list \
+            --repo "$repo" \
             --state open \
-            --base "$patch_branch" \
-            --head "$MAIN_BRANCH" \
+            --search "$title in:title" \
             --json number \
             --jq '.[0].number')"
 
-          if [[ -n "$existing_pr" && "$existing_pr" != "null" ]]; then
-            gh pr edit "$existing_pr" --title "$title" --body "$body"
-            echo "Updated existing PR #$existing_pr"
+          if [[ -n "$existing_issue" && "$existing_issue" != "null" ]]; then
+            gh issue edit "$existing_issue" --repo "$repo" --title "$title" --body "$body"
+            gh issue edit "$existing_issue" --repo "$repo" --add-assignee "copilot"
+            echo "Updated existing issue #$existing_issue"
           else
-            gh pr create --base "$patch_branch" --head "$MAIN_BRANCH" --title "$title" --body "$body"
-            echo "Created new upgrade PR"
+            issue_url="$(gh issue create --repo "$repo" --title "$title" --body "$body")"
+            issue_number="${issue_url##*/}"
+            gh issue edit "$issue_number" --repo "$repo" --add-assignee "copilot"
+            echo "Created new upgrade issue: $issue_url"
           fi
 
       - name: Mark upstream tag as processed
