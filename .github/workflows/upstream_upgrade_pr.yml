@@ -156,16 +156,15 @@ jobs:
           release_kind="${{ steps.detect.outputs.release_kind }}"
 
           title="Upgrade UBOL to $latest_tag"
-          body="$(cat <<EOF
-Automated upstream upgrade PR.
-
-- Upstream tag: \`$latest_tag\`
-- Release type: \`$release_kind\`
-- Merge direction: \`$MAIN_BRANCH\` -> \`$patch_branch\`
-
-This PR was opened by \`upstream_upgrade_pr.yml\`.
-EOF
-)"
+          body="$(printf '%s\n' \
+            "Automated upstream upgrade PR." \
+            "" \
+            "- Upstream tag: \`$latest_tag\`" \
+            "- Release type: \`$release_kind\`" \
+            "- Merge direction: \`$MAIN_BRANCH\` -> \`$patch_branch\`" \
+            "" \
+            "This PR was opened by \`upstream_upgrade_pr.yml\`." \
+          )"
 
           existing_pr="$(gh pr list \
             --state open \
