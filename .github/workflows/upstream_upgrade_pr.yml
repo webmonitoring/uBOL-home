@@ -19,6 +19,11 @@ on:
         required: false
         default: wm/patches
         type: string
+      resumeUrl:
+        description: Optional n8n resume URL callback
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -33,6 +38,11 @@ jobs:
     permissions:
       contents: write
       issues: write
+    outputs:
+      latest_tag: ${{ steps.detect.outputs.latest_tag }}
+      release_kind: ${{ steps.detect.outputs.release_kind }}
+      patch_branch: ${{ steps.detect.outputs.patch_branch }}
+      should_continue: ${{ steps.detect.outputs.should_continue }}
     runs-on: ubuntu-latest
     env:
       UPSTREAM_REMOTE: upstream
@@ -40,6 +50,7 @@ jobs:
       MAIN_BRANCH: main
       PATCH_BRANCH: ${{ github.event.client_payload.patch_branch || github.event.inputs.patch_branch || 'wm/patches' }}
       ALLOW_PRERELEASE: ${{ github.event.client_payload.allow_prerelease || github.event.inputs.allow_prerelease || 'false' }}
+      RESUME_URL: ${{ github.event.client_payload.resumeUrl || github.event.client_payload.resume_url || github.event.inputs.resumeUrl || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -152,8 +163,9 @@ jobs:
 
       - name: Open or update upgrade issue
         if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true' && steps.issue_needed.outputs.needed == 'true'
+        id: integration_issue
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.COPILOT_ASSIGN_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           patch_branch="${{ steps.detect.outputs.patch_branch }}"
           latest_tag="${{ steps.detect.outputs.latest_tag }}"
@@ -195,17 +207,39 @@ jobs:
 
           if [[ -n "$existing_issue" && "$existing_issue" != "null" ]]; then
             gh issue edit "$existing_issue" --repo "$repo" --title "$title" --body "$body"
-            gh issue edit "$existing_issue" --repo "$repo" --add-assignee "Copilot"
+            issue_number="$existing_issue"
+            issue_url="https://github.com/$repo/issues/$issue_number"
             echo "Updated existing issue #$existing_issue"
           else
             issue_url="$(gh issue create --repo "$repo" --title "$title" --body "$body")"
             issue_number="${issue_url##*/}"
-            gh issue edit "$issue_number" --repo "$repo" --add-assignee "Copilot"
             echo "Created new upgrade issue: $issue_url"
           fi
+          echo "issue_number=$issue_number" >> "$GITHUB_OUTPUT"
+          echo "issue_url=$issue_url" >> "$GITHUB_OUTPUT"
 
-      - name: Mark upstream tag as processed
-        if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true'
+      - name: Resume n8n callback
+        if: always() && env.RESUME_URL != ''
         run: |
-          git tag "${{ steps.marker.outputs.marker_tag }}" "$MAIN_BRANCH"
-          git push origin "refs/tags/${{ steps.marker.outputs.marker_tag }}"
+          status="completed"
+          if [[ "${{ steps.detect.outputs.should_continue }}" != "true" ]]; then
+            status="skipped_prerelease"
+          elif [[ "${{ steps.marker.outputs.already_processed }}" == "true" ]]; then
+            status="already_processed"
+          elif [[ "${{ steps.issue_needed.outputs.needed }}" != "true" ]]; then
+            status="no_integration_needed"
+          fi
+
+          payload="$(jq -nc \
+            --arg status "$status" \
+            --arg latest_tag "${{ steps.detect.outputs.latest_tag }}" \
+            --arg release_kind "${{ steps.detect.outputs.release_kind }}" \
+            --arg patch_branch "${{ steps.detect.outputs.patch_branch }}" \
+            --arg issue_number "${{ steps.integration_issue.outputs.issue_number }}" \
+            --arg issue_url "${{ steps.integration_issue.outputs.issue_url }}" \
+            '{status:$status,latest_tag:$latest_tag,release_kind:$release_kind,patch_branch:$patch_branch,issue_number:$issue_number,issue_url:$issue_url}')"
+
+          curl -fsSL -X POST \
+            -H "content-type: application/json" \
+            --data "$payload" \
+            "$RESUME_URL"
