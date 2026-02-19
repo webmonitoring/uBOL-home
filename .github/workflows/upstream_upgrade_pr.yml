@@ -195,12 +195,12 @@ jobs:
 
           if [[ -n "$existing_issue" && "$existing_issue" != "null" ]]; then
             gh issue edit "$existing_issue" --repo "$repo" --title "$title" --body "$body"
-            gh issue edit "$existing_issue" --repo "$repo" --add-assignee "@copilot"
+            gh issue edit "$existing_issue" --repo "$repo" --add-assignee "Copilot"
             echo "Updated existing issue #$existing_issue"
           else
             issue_url="$(gh issue create --repo "$repo" --title "$title" --body "$body")"
             issue_number="${issue_url##*/}"
-            gh issue edit "$issue_number" --repo "$repo" --add-assignee "@copilot"
+            gh issue edit "$issue_number" --repo "$repo" --add-assignee "Copilot"
             echo "Created new upgrade issue: $issue_url"
           fi
 
