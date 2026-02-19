@@ -46,12 +46,16 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Resolved version: $VERSION"
 
-      - name: Validate version equals upstream tag on main
+      - name: Validate version equals upstream tag
         run: |
-          git fetch origin main --tags --prune
-          UPSTREAM_TAG=$(git describe --tags --abbrev=0 origin/main)
+          git remote add upstream https://github.com/uBlockOrigin/uBOL-home.git 2>/dev/null || true
+          git fetch upstream main --tags --prune
+          if ! UPSTREAM_TAG=$(git describe --tags --abbrev=0 upstream/main 2>/dev/null); then
+            echo "Could not resolve a release tag from upstream/main."
+            exit 1
+          fi
           if [ "${{ steps.version.outputs.version }}" != "$UPSTREAM_TAG" ]; then
-            echo "Package version (${{ steps.version.outputs.version }}) does not match latest tag on origin/main ($UPSTREAM_TAG)."
+            echo "Package version (${{ steps.version.outputs.version }}) does not match latest tag on upstream/main ($UPSTREAM_TAG)."
             exit 1
           fi
           echo "Version matches upstream tag: $UPSTREAM_TAG"
