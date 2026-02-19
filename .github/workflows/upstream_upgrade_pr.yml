@@ -40,7 +40,6 @@ jobs:
       MAIN_BRANCH: main
       PATCH_BRANCH: ${{ github.event.client_payload.patch_branch || github.event.inputs.patch_branch || 'wm/patches' }}
       ALLOW_PRERELEASE: ${{ github.event.client_payload.allow_prerelease || github.event.inputs.allow_prerelease || 'false' }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -153,6 +152,8 @@ jobs:
 
       - name: Open or update upgrade PR
         if: steps.detect.outputs.should_continue == 'true' && steps.marker.outputs.already_processed != 'true' && steps.pr_needed.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MONOREPO_ISSUE_TOKEN }}
         run: |
           patch_branch="${{ steps.detect.outputs.patch_branch }}"
           latest_tag="${{ steps.detect.outputs.latest_tag }}"
