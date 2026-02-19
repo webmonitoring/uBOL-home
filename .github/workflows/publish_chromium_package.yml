@@ -1,0 +1,79 @@
+name: publish_chromium_package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - wm/patches
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'wm/patches' &&
+        github.event.pull_request.head.ref == 'main' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com/
+          scope: '@webmonitoring'
+
+      - name: Sync package version from manifest
+        run: node webmonitoring/scripts/sync-chromium-package-version.mjs
+
+      - name: Read package version
+        id: version
+        run: |
+          VERSION=$(node -e "const p=require('./chromium/package.json'); process.stdout.write(p.version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      - name: Validate version equals upstream tag on main
+        run: |
+          git fetch origin main --tags --prune
+          UPSTREAM_TAG=$(git describe --tags --abbrev=0 origin/main)
+          if [ "${{ steps.version.outputs.version }}" != "$UPSTREAM_TAG" ]; then
+            echo "Package version (${{ steps.version.outputs.version }}) does not match latest tag on origin/main ($UPSTREAM_TAG)."
+            exit 1
+          fi
+          echo "Version matches upstream tag: $UPSTREAM_TAG"
+
+      - name: Check if version already exists
+        id: exists
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PACKAGE_UPLOAD_TOKEN }}
+        run: |
+          if npm view "@webmonitoring/ublock-origin-lite-chromium@${{ steps.version.outputs.version }}" version --registry=https://npm.pkg.github.com/ >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish package
+        if: steps.exists.outputs.already_published != 'true'
+        working-directory: chromium
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PACKAGE_UPLOAD_TOKEN }}
+        run: npm publish --registry=https://npm.pkg.github.com/
+
+      - name: Skip publish (already exists)
+        if: steps.exists.outputs.already_published == 'true'
+        run: echo "Version ${{ steps.version.outputs.version }} already published. Skipping."

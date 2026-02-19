@@ -1,0 +1,25 @@
+{
+  "name": "@webmonitoring/ublock-origin-lite-chromium",
+  "version": "2026.211.2314",
+  "description": "Packaged Chromium build of uBlock Origin Lite for screenshot-worker",
+  "license": "GPL-3.0-or-later",
+  "private": false,
+  "main": "index.js",
+  "scripts": {
+    "sync-version": "node ../webmonitoring/scripts/sync-chromium-package-version.mjs",
+    "prepublishOnly": "npm run sync-version"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./manifest": "./manifest.json",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webmonitoring/uBOL-home.git",
+    "directory": "chromium"
+  }
+}
