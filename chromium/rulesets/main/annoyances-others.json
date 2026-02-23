@@ -421,25 +421,5 @@
 {"action":{"type":"block"},"condition":{"urlFilter":"||minorasu.basf.co.jp/shared/scripts/questionnaire.js"},"id":420,"priority":10},
 {"action":{"type":"block"},"condition":{"urlFilter":"||timesprayer.today/widget_frame.php"},"id":421,"priority":10},
 {"action":{"type":"block"},"condition":{"urlFilter":"||cdnapps.avada.io/faq/sounds/"},"id":422,"priority":10},
-{"action":{"type":"block"},"condition":{"urlFilter":"/akam-sw.js"},"id":423,"priority":10},
-{"action":{"type":"block"},"condition":{"resourceTypes": [
-    "script",
-    "xmlhttprequest",
-    "sub_frame"
-  ],"urlFilter":"||gstatic.com/recaptcha/*"},"id":500,"priority":100},
-  {"action":{"type":"block"},"condition":{"resourceTypes": [
-    "script",
-    "xmlhttprequest",
-    "sub_frame"
-  ],"urlFilter":"||google.com/recaptcha/*"},"id":501,"priority":100},
-  {"action":{"type":"block"},"condition":{"resourceTypes": [
-    "script",
-    "xmlhttprequest",
-    "sub_frame"
-  ],"urlFilter":"||google.com/maps/*"},"id":502,"priority":100},
-  {"action":{"type":"block"},"condition":{"resourceTypes": [
-    "script",
-    "xmlhttprequest",
-    "sub_frame"
-  ],"urlFilter":"||forms.hsforms.com/*"},"id":503,"priority":100}
+{"action":{"type":"block"},"condition":{"urlFilter":"/akam-sw.js"},"id":423,"priority":10}
 ]
