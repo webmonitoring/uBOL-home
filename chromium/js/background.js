@@ -68,9 +68,11 @@ import {
 } from './ext.js';
 
 import {
-    defaultConfig, process,
+    defaultConfig,
+    loadRulesetConfig,
+    process,
     rulesetConfig,
-    saveRulesetConfig
+    saveRulesetConfig,
 } from './config.js';
 
 import {
