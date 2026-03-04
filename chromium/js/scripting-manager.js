@@ -361,6 +361,42 @@ function registerScriptlet(context, scriptletDetails) {
 
 /******************************************************************************/
 
+function registerLoadStatus(context) {
+    const { filteringModeDetails } = context;
+    const { none, basic, optimal, complete } = filteringModeDetails;
+
+    const matches = [
+        ...ut.matchesFromHostnames(optimal),
+        ...ut.matchesFromHostnames(complete),
+    ];
+    if ( matches.length === 0 ) { return; }
+
+    normalizeMatches(matches);
+
+    const excludeMatches = [];
+    if ( none.has('all-urls') === false && basic.has('all-urls') === false ) {
+        excludeMatches.push(...ut.matchesFromHostnames(none));
+        excludeMatches.push(...ut.matchesFromHostnames(basic));
+    }
+
+    const directive = {
+        id: 'load-status',
+        js: [ '/js/scripting/load-status.js' ],
+        matches,
+        allFrames: true,
+        runAt: 'document_start',
+        world: 'MAIN',
+        matchOriginAsFallback: true,
+    };
+    if ( excludeMatches.length !== 0 ) {
+        directive.excludeMatches = excludeMatches;
+    }
+
+    context.toAdd.push(directive);
+}
+
+/******************************************************************************/
+
 // Issue: Safari appears to completely ignore excludeMatches
 // https://github.com/radiolondra/ExcludeMatches-Test
 
@@ -397,6 +433,7 @@ export async function registerInjectables() {
         registerCustomFilters(context),
         registerToolbarIconToggler(context),
     ]);
+    registerLoadStatus(context);
 
     ubolLog(`Unregistered all content (css/js)`);
     try {

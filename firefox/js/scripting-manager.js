@@ -496,6 +496,57 @@ function registerScriptlet(context, scriptletDetails) {
 
 /******************************************************************************/
 
+function registerLoadStatus(context) {
+    const { before, filteringModeDetails } = context;
+
+    const js = [ '/js/scripting/load-status.js' ];
+
+    const { none, basic, optimal, complete } = filteringModeDetails;
+    const matches = [
+        ...ut.matchesFromHostnames(optimal),
+        ...ut.matchesFromHostnames(complete),
+    ];
+    if ( matches.length === 0 ) { return; }
+
+    const excludeMatches = [];
+    if ( none.has('all-urls') === false ) {
+        excludeMatches.push(...ut.matchesFromHostnames(none));
+    }
+    if ( basic.has('all-urls') === false ) {
+        excludeMatches.push(...ut.matchesFromHostnames(basic));
+    }
+
+    const registered = before.get('load-status');
+    before.delete('load-status'); // Important!
+
+    const directive = {
+        id: 'load-status',
+        js,
+        allFrames: true,
+        matches,
+        excludeMatches,
+        runAt: 'document_start',
+    };
+
+    // register
+    if ( registered === undefined ) {
+        context.toAdd.push(directive);
+        return;
+    }
+
+    // update
+    if (
+        arrayEq(registered.js, js, false) === false ||
+        arrayEq(registered.matches, matches) === false ||
+        arrayEq(registered.excludeMatches, excludeMatches) === false
+    ) {
+        context.toRemove.push('load-status');
+        context.toAdd.push(directive);
+    }
+}
+
+/******************************************************************************/
+
 async function registerInjectables(origins) {
     void origins;
 
@@ -531,6 +582,7 @@ async function registerInjectables(origins) {
     registerDeclarative(context);
     registerProcedural(context);
     registerScriptlet(context, scriptletDetails);
+    registerLoadStatus(context);
     registerSpecific(context);
     registerGeneric(context, genericDetails);
     registerHighGeneric(context, genericDetails);
