@@ -1,27 +1,21 @@
 name: publish_chromium_package
 
 on:
-  workflow_dispatch:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - wm/patches
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: publish-chromium-package
+  cancel-in-progress: false
+
 jobs:
   publish:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.pull_request.merged == true &&
-        github.event.pull_request.base.ref == 'wm/patches' &&
-        github.event.pull_request.head.ref == 'main' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,47 +28,26 @@ jobs:
         with:
           node-version: 22
           registry-url: https://npm.pkg.github.com/
-          scope: '@webmonitoring'
+          scope: "@webmonitoring"
 
-      - name: Sync package version from manifest
+      - name: Sync package version from src manifest
         run: node webmonitoring/scripts/sync-chromium-package-version.mjs
 
-      - name: Read package version
-        id: version
-        run: |
-          VERSION=$(node -e "const p=require('./chromium/package.json'); process.stdout.write(p.version)")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $VERSION"
+      - name: Ensure manifest.json exists for Chromium package consumers
+        run: cp src/manifest_v3.json src/manifest.json
 
-      - name: Validate version equals upstream tag
+      - name: Set publish package version
+        id: versioning
         run: |
-          git remote add upstream https://github.com/uBlockOrigin/uBOL-home.git 2>/dev/null || true
-          git fetch upstream main --tags --prune
-          if ! UPSTREAM_TAG=$(git describe --tags --abbrev=0 upstream/main 2>/dev/null); then
-            echo "Could not resolve a release tag from upstream/main."
-            exit 1
-          fi
-          if [ "${{ steps.version.outputs.version }}" != "$UPSTREAM_TAG" ]; then
-            echo "Package version (${{ steps.version.outputs.version }}) does not match latest tag on upstream/main ($UPSTREAM_TAG)."
-            exit 1
-          fi
-          echo "Version matches upstream tag: $UPSTREAM_TAG"
+          BASE_VERSION=$(node -e "const p=require('./src/package.json'); process.stdout.write(p.version)")
+          NEW_VERSION="${BASE_VERSION}-$(git rev-list --count HEAD)"
+          COMMIT_COUNT="${NEW_VERSION#${BASE_VERSION}-}"
+          node -e "const fs=require('fs'); const p='src/package.json'; const pkg=JSON.parse(fs.readFileSync(p,'utf8')); pkg.version=process.argv[1]; fs.writeFileSync(p, JSON.stringify(pkg, null, 2)+'\n');" "$NEW_VERSION"
 
-      - name: Check if version already exists
-        id: exists
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if npm view "@webmonitoring/ublock-origin-lite-chromium@${{ steps.version.outputs.version }}" version --registry=https://npm.pkg.github.com/ >/dev/null 2>&1; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Publish package
         if: steps.exists.outputs.already_published != 'true'
-        id: publish
-        working-directory: chromium
+        working-directory: src
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish --registry=https://npm.pkg.github.com/
+        run: npm publish --registry=https://npm.pkg.github.com/ --ignore-scripts
