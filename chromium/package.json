@@ -1,6 +1,6 @@
 {
   "name": "@webmonitoring/ublock-origin-lite-chromium",
-  "version": "2026.211.2314",
+  "version": "2026.222.1657",
   "description": "Packaged Chromium build of uBlock Origin Lite for screenshot-worker",
   "license": "GPL-3.0-or-later",
   "private": false,
