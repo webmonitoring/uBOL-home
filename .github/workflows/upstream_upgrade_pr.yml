@@ -83,32 +83,47 @@ jobs:
           PATCH_BRANCH="${PATCH_BRANCH:-wm/patches}"
           ALLOW_PRERELEASE="${ALLOW_PRERELEASE:-false}"
 
-          latest_tag="$(git describe --tags --abbrev=0 "$UPSTREAM_REMOTE/$MAIN_BRANCH")"
-          release_kind="stable"
+          latest_tag=""
+          release_kind=""
 
-          if [[ "$latest_tag" == *"-beta"* ]]; then
-            release_kind="beta"
+          for page in $(seq 1 5); do
+            releases_json="$(curl -fsSL -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases?per_page=100&page=$page")"
+
+            if [[ "$(jq 'length' <<< "$releases_json")" -eq 0 ]]; then
+              break
+            fi
+
+            release_json="$(jq -c --arg allow_prerelease "$ALLOW_PRERELEASE" '
+              [
+                .[]
+                | select(.draft != true)
+                | select($allow_prerelease == "true" or .prerelease != true)
+              ][0] // empty
+            ' <<< "$releases_json")"
+
+            if [[ -n "$release_json" ]]; then
+              latest_tag="$(jq -r '.tag_name' <<< "$release_json")"
+              if [[ "$(jq -r '.prerelease' <<< "$release_json")" == "true" ]]; then
+                release_kind="beta"
+              else
+                release_kind="stable"
+              fi
+              break
+            fi
+          done
+
+          if [[ -z "$latest_tag" ]]; then
+            echo "No matching upstream release found."
+            exit 1
           fi
 
-          api_json="$(curl -fsSL -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/uBlockOrigin/uBOL-home/releases/tags/$latest_tag" || true)"
-          api_prerelease="$(jq -r '.prerelease // empty' <<< "$api_json")"
-          if [[ "$api_prerelease" == "true" ]]; then
-            release_kind="beta"
-          elif [[ "$api_prerelease" == "false" ]]; then
-            release_kind="stable"
-          fi
-
-          if [[ "$release_kind" == "beta" && "$ALLOW_PRERELEASE" != "true" ]]; then
-            echo "Skipping beta tag $latest_tag because ALLOW_PRERELEASE=false"
-            echo "should_continue=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_continue=true" >> "$GITHUB_OUTPUT"
-          fi
+          echo "Latest matching upstream release is $latest_tag ($release_kind)."
 
           echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
           echo "release_kind=$release_kind" >> "$GITHUB_OUTPUT"
           echo "patch_branch=$PATCH_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "should_continue=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip info
         if: steps.detect.outputs.should_continue != 'true'
