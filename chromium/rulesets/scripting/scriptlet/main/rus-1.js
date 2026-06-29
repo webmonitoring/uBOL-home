@@ -590,6 +590,20 @@ function objectPruneFn(
     if ( outcome === 'match' ) { return obj; }
 }
 
+function offIdleFn(id) {
+    if ( self.requestIdleCallback ) {
+        return self.cancelIdleCallback(id);
+    }
+    return self.cancelAnimationFrame(id);
+}
+
+function onIdleFn(fn, options) {
+    if ( self.requestIdleCallback ) {
+        return self.requestIdleCallback(fn, options);
+    }
+    return self.requestAnimationFrame(fn);
+}
+
 function parsePropertiesToMatchFn(propsToMatch, implicit = '') {
     const safe = safeSelf();
     const needles = new Map();
@@ -1103,14 +1117,14 @@ function removeAttr(
     let timerId;
     const rmattrAsync = ( ) => {
         if ( timerId !== undefined ) { return; }
-        timerId = safe.onIdle(( ) => {
+        timerId = onIdleFn(( ) => {
             timerId = undefined;
             rmattr();
         }, { timeout: 17 });
     };
     const rmattr = ( ) => {
         if ( timerId !== undefined ) {
-            safe.offIdle(timerId);
+            offIdleFn(timerId);
             timerId = undefined;
         }
         try {
@@ -1304,18 +1318,6 @@ function safeSelf() {
             }, []);
             return this.Object_fromEntries(entries);
         },
-        onIdle(fn, options) {
-            if ( self.requestIdleCallback ) {
-                return self.requestIdleCallback(fn, options);
-            }
-            return self.requestAnimationFrame(fn);
-        },
-        offIdle(id) {
-            if ( self.requestIdleCallback ) {
-                return self.cancelIdleCallback(id);
-            }
-            return self.cancelAnimationFrame(id);
-        }
     };
     scriptletGlobals.safeSelf = safe;
     if ( scriptletGlobals.bcSecret === undefined ) { return safe; }
@@ -1588,15 +1590,15 @@ function validateConstantFn(trusted, raw, extraArgs = {}) {
 const scriptletGlobals = {}; // eslint-disable-line
 
 const $scriptletFunctions$ = /* 11 */
-[removeAttr,abortOnStackTrace,preventAddEventListener,preventSetTimeout,setConstant,jsonPruneXhrResponse,jsonPrune,preventFetch,abortOnPropertyRead,abortOnPropertyWrite,preventXhr];
+[removeAttr,abortOnStackTrace,preventAddEventListener,setConstant,jsonPruneXhrResponse,jsonPrune,preventFetch,abortOnPropertyRead,abortOnPropertyWrite,preventXhr,preventSetTimeout];
 
-const $scriptletArgs$ = /* 52 */ ["jsaction","#islsp c-wiz a[href^=\"http\"][data-ved][target]","stay","document.head.appendChild","inlineScript","click","externalLink","/ d[0-9]{1}/","data-cturl",".searchresults a","data-safe-proxy-url","a","BB.disableRefLinks","true","Object.prototype.canShowMoreAds","noopFunc","Object.prototype.hasAdv","meta.country","","propsToMatch","/api/anime","Blocks","Object.prototype.getBaseFingerprint","Object.prototype.hasPreroll","null","Object.prototype.needShowAlicePopup","Object.prototype.Begun","undefined","Object.prototype.antiadblock","false","/generate_204","Object.prototype.AdvManager","Object.prototype.isNonEmptyString","Object.prototype.initAsyncRtb","direct rtb seatbid data.*.attributes.blockId","data-link-id","Object.prototype.DirectLine","Object.prototype.renderDirect","__pcodeAllActiveTestIds","data-counter","#search-result > .serp-item a","yabs.yandex.ru/count/","Object.prototype.initPcode","__activeTestIds","Object.prototype.Rtb","/beforeunload|pagehide/","0x","BLOCKERS","Object.prototype.AdblockCookieMatchingType","removeAttr","setTimeout","document.referrer"];
+const $scriptletArgs$ = /* 56 */ ["jsaction","#islsp c-wiz a[href^=\"http\"][data-ved][target]","stay","document.head.appendChild","inlineScript","click","externalLink","data-cturl",".searchresults a","data-safe-proxy-url","a","BB.disableRefLinks","true","Object.prototype.Begun","undefined","Object.prototype.antiadblock","false","Object.prototype.canShowMoreAds","noopFunc","Object.prototype.hasAdv","meta.country","","propsToMatch","/api/anime","Blocks","Object.prototype.getBaseFingerprint","Object.prototype.hasPreroll","null","Object.prototype.needShowAlicePopup","/generate_204","Object.prototype.AdvManager","Object.prototype.isNonEmptyString","history.replaceState","trueFunc","Object.prototype.partnerRefreshTracker","Object.prototype.setBlockId","direct rtb seatbid data.*.attributes.blockId","data-link-id","Object.prototype.DirectLine","__pcodeAllActiveTestIds","data-counter","#search-result > .serp-item a","yabs.yandex.ru/count/","__activeTestIds","Object.prototype.initPcode","Object.prototype.Rtb","/beforeunload|pagehide/","0x","DOMContentLoaded","document","/BLOCKERS|NOT_BLOCKED/","Object.prototype.AdblockCookieMatchingType","removeAttr","setTimeout","document.referrer","https://4pda.to/"];
 
-const $scriptletArglists$ = /* 36 */ "0,0,1,2;1,3,4;2,5,6;3,7;0,8,9,2;0,10,11,2;4,12,13;4,14,15;4,16,15;5,17,18,19,20;6,21;1,22,4;4,23,24;4,25,24;4,26,27;4,28,29;7,30;8,31;4,32,27;4,33,27;6,34;0,35,11,2;4,36,27;4,37,15;9,38;0,39,40;10,41;4,42,27;8,43;4,37,27;4,44,27;2,45,46;3,47;4,48,27;3,49,50;8,51";
+const $scriptletArglists$ = /* 36 */ "0,0,1,2;1,3,4;2,5,6;0,7,8,2;0,9,10,2;3,11,12;3,13,14;3,15,16;3,17,18;3,19,18;4,20,21,22,23;5,24;1,25,4;3,26,27;3,28,27;6,29;7,30;3,31,14;3,32,33;7,34;7,35;5,36;0,37,10,2;3,38,14;8,39;0,40,41;9,42;7,43;3,44,14;3,45,14;2,46,47;2,48,47,49;10,50;3,51,14;10,52,53;1,54,55";
 
-const $scriptletArglistRefs$ = /* 65 */ "20,25,26,27,28,29,30;10,11;10,11;31,32,33;34,35;27;12,19,20;7,8;10,11;31,32,33;10,11;10,11;9;20,25,26,27,28,29,30;10,11;1;10,11;24;1;10,11;10,11;6;14,15;9;14,15;10,11;12;-21,-26,-28,-29,-30,-31;14,15;18;10,11;1;10,11;14,15;5;1;1;1;6;10,11;0;12;10,11;-11,-12;14,15;21,22,23,-28,-29,-30;3;2;6;6;6;14,15;-11,-12;-12;17;4;16;-11,-12;1;14,15;14,15;-27;13;12;12";
+const $scriptletArglistRefs$ = /* 66 */ "21,25,26,27,28,29;11,12;11,12;30,31,32,33;34,35;13,20,21;8,9;11,12;19;30,31,32;11,12;10;11,12;21,25,26,27,28,29;11,12;1;11,12;24;1;11,12;11,12;5;6,7;10;6,7;11,12;13;-22,-26,-28,-29,-30;6,7;17;11,12;1;11,12;4;1;1;1;5;20;11,12;0;13;11,12;-12,-13;22,23,-28,-29;2;5;5;5;6,7;30,31,32;-12,-13;-13;16;3;6,7;15;-12,-13;1;6,7;18;6,7;-27;14;13;13";
 
-const $scriptletHostnames$ = /* 65 */ ["ya.*","eda.*","wmj.*","ya.ru","4pda.*","auto.*","dzen.*","ivi.ru","quto.*","dzen.ru","lenta.*","motor.*","anilib.*","yandex.*","gazeta.ru","innal.top","letidor.*","meteum.ai","naylo.top","passion.*","rambler.*","rutr.life","shakko.ru","animelib.*","levik.blog","moslenta.*","naydex.net","yandex.net","periskop.su","shedevrum.*","championat.*","game4you.top","gazeta.press","lena-miro.ru","mail.ukr.net","rustorka.com","rustorka.net","rustorka.top","rutracker.nl","www.afisha.*","www.google.*","yastatic.net","avtorambler.*","id.rambler.ru","livejournal.*","mail.yandex.*","online-fix.me","otvet.mail.ru","rutracker.lib","rutracker.net","rutracker.org","shiro-kino.ru","vp.rambler.ru","mail.rambler.*","nova.rambler.*","search.ukr.net","music.youtube.*","quiz.rambler.ru","rustorkacom.lib","vadimrazumov.ru","olegmakarenko.ru","games.s3.yandex.net","horoscopes.rambler.*","widgets.kinopoisk.ru","frontend.vh.yandex.ru"];
+const $scriptletHostnames$ = /* 66 */ ["ya.*","eda.*","wmj.*","ya.ru","4pda.*","dzen.*","ivi.ru","quto.*","auto.ru","dzen.ru","motor.*","anilib.*","lenta.ru","yandex.*","gazeta.ru","innal.top","letidor.*","meteum.ai","naylo.top","passion.*","rambler.*","rutr.life","shakko.ru","animelib.*","levik.blog","moslenta.*","naydex.net","yandex.net","periskop.su","shedevrum.*","championat.*","game4you.top","gazeta.press","mail.ukr.net","rustorka.com","rustorka.net","rustorka.top","rutracker.nl","sportsdzen.*","www.afisha.*","www.google.*","yastatic.net","avtorambler.*","id.rambler.ru","mail.yandex.*","otvet.mail.ru","rutracker.lib","rutracker.net","rutracker.org","shiro-kino.ru","sportsdzen.ru","vp.rambler.ru","mail.rambler.*","nova.rambler.*","search.ukr.net","livejournal.com","music.youtube.*","quiz.rambler.ru","rustorkacom.lib","vadimrazumov.ru","www.kinopoisk.*","olegmakarenko.ru","games.s3.yandex.net","horoscopes.rambler.*","widgets.kinopoisk.ru","frontend.vh.yandex.ru"];
 
 const $scriptletFromRegexes$ = /* 0 */ [];
 
@@ -1618,18 +1620,22 @@ const entries = (( ) => {
         const hn1 = origin.slice(beg+3)
         const end = hn1.indexOf(':');
         const hn2 = end === -1 ? hn1 : hn1.slice(0, end);
-        const hnParts = hn2.split('.');
         if ( hn2.length === 0 ) { return; }
-        const hns = [];
-        for ( let i = 0; i < hnParts.length; i++ ) {
-            hns.push(`${hnParts.slice(i).join('.')}`);
+        const hns = [ hn2 ];
+        for ( let pos = 0; ; ) {
+            pos = hn2.indexOf('.', pos) + 1;
+            if ( pos === 0 ) { break; }
+            hns.push(hn2.slice(pos));
         }
+        hns.push('*');
         const ens = [];
         if ( $hasEntities$ ) {
-            const n = hnParts.length - 1;
-            for ( let i = 0; i < n; i++ ) {
-                for ( let j = n; j > i; j-- ) {
-                    ens.push(`${hnParts.slice(i,j).join('.')}.*`);
+            for ( let hn of hns ) {
+                for (;;) {
+                    const pos = hn.lastIndexOf('.');
+                    if ( pos === -1 ) { break; }
+                    hn = hn.slice(0, pos);
+                    ens.push(`${hn}.*`);
                 }
             }
             ens.sort((a, b) => {
@@ -1639,55 +1645,55 @@ const entries = (( ) => {
             });
         }
         return { hns, ens, i };
-    }).filter(a => a !== undefined);
+    }).filter(a => a);
 })();
 if ( entries.length === 0 ) { return; }
 
-const collectArglistRefIndices = (out, hn, r) => {
-    let l = 0, i = 0, d = 0;
-    let candidate = '';
-    while ( l < r ) {
-        i = l + r >>> 1;
-        candidate = $scriptletHostnames$[i];
-        d = hn.length - candidate.length;
-        if ( d === 0 ) {
-            if ( hn === candidate ) {
-                out.add(i); break;
-            }
-            d = hn < candidate ? -1 : 1;
-        }
-        if ( d < 0 ) {
-            r = i;
-        } else {
-            l = i + 1;
-        }
-    }
-    return i;
-};
-
-const indicesFromHostname = (out, hnDetails, suffix = '') => {
-    if ( hnDetails.hns.length === 0 ) { return; }
-    let r = $scriptletHostnames$.length;
-    for ( const hn of hnDetails.hns ) {
-        r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
-    }
-    if ( $hasEntities$ ) {
-        let r = $scriptletHostnames$.length;
-        for ( const en of hnDetails.ens ) {
-            r = collectArglistRefIndices(out, `${en}${suffix}`, r);
-        }
-    }
-};
-
 const todoIndices = new Set();
-indicesFromHostname(todoIndices, entries[0]);
-if ( $hasAncestors$ ) {
-    for ( const entry of entries ) {
-        if ( entry.i === 0 ) { continue; }
-        indicesFromHostname(todoIndices, entry, '>>');
+if ( $scriptletHostnames$.length ) {
+    const collectArglistRefIndices = (out, hn, r) => {
+        let l = 0, i = 0, d = 0;
+        let candidate = '';
+        while ( l < r ) {
+            i = l + r >>> 1;
+            candidate = $scriptletHostnames$[i];
+            d = hn.length - candidate.length;
+            if ( d === 0 ) {
+                if ( hn === candidate ) {
+                    out.add(i); break;
+                }
+                d = hn < candidate ? -1 : 1;
+            }
+            if ( d < 0 ) {
+                r = i;
+            } else {
+                l = i + 1;
+            }
+        }
+        return i + 1;
+    };
+    const indicesFromHostname = (out, hnDetails, suffix = '') => {
+        if ( hnDetails.hns.length === 0 ) { return; }
+        let r = $scriptletHostnames$.length;
+        for ( const hn of hnDetails.hns ) {
+            r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
+        }
+        if ( $hasEntities$ ) {
+            let r = $scriptletHostnames$.length;
+            for ( const en of hnDetails.ens ) {
+                r = collectArglistRefIndices(out, `${en}${suffix}`, r);
+            }
+        }
+    };
+    indicesFromHostname(todoIndices, entries[0]);
+    if ( $hasAncestors$ ) {
+        for ( const entry of entries ) {
+            if ( entry.i === 0 ) { continue; }
+            indicesFromHostname(todoIndices, entry, '>>');
+        }
     }
+    $scriptletHostnames$.length = 0;
 }
-$scriptletHostnames$.length = 0;
 
 // Collect arglist references
 const todo = new Set();

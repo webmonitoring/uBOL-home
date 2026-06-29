@@ -178,7 +178,7 @@ function hrefSanitizer(
             if ( shouldSanitize ) { break; }
         }
         if ( shouldSanitize === false ) { return; }
-        timer = safe.onIdle(( ) => {
+        timer = onIdleFn(( ) => {
             timer = undefined;
             sanitize();
         });
@@ -192,6 +192,13 @@ function hrefSanitizer(
         });
     };
     runAt(( ) => { start(); }, 'interactive');
+}
+
+function onIdleFn(fn, options) {
+    if ( self.requestIdleCallback ) {
+        return self.requestIdleCallback(fn, options);
+    }
+    return self.requestAnimationFrame(fn);
 }
 
 function removeClass(
@@ -240,7 +247,7 @@ function removeClass(
             }
         }
         if ( skip ) { return; }
-        timer = safe.onIdle(rmclass, { timeout: 67 });
+        timer = onIdleFn(rmclass, { timeout: 67 });
     };
     const observer = new MutationObserver(mutationHandler);
     const start = ( ) => {
@@ -588,18 +595,6 @@ function safeSelf() {
             }, []);
             return this.Object_fromEntries(entries);
         },
-        onIdle(fn, options) {
-            if ( self.requestIdleCallback ) {
-                return self.requestIdleCallback(fn, options);
-            }
-            return self.requestAnimationFrame(fn);
-        },
-        offIdle(id) {
-            if ( self.requestIdleCallback ) {
-                return self.cancelIdleCallback(id);
-            }
-            return self.cancelAnimationFrame(id);
-        }
     };
     scriptletGlobals.safeSelf = safe;
     if ( scriptletGlobals.bcSecret === undefined ) { return safe; }
@@ -743,10 +738,9 @@ function setAttrFn(
     const start = ( ) => {
         if ( applySetAttr() === false ) { return; }
         observer = new MutationObserver(onDomChanged);
-        observer.observe(document.body, {
-            subtree: true,
-            childList: true,
-        });
+        const root = document.documentElement;
+        if ( root instanceof self.Node === false ) { return; }
+        observer.observe(root, { subtree: true, childList: true });
     };
     runAt(( ) => { start(); }, options.runAt || 'idle');
 }
@@ -1034,13 +1028,13 @@ const scriptletGlobals = {}; // eslint-disable-line
 const $scriptletFunctions$ = /* 9 */
 [removeCookie,hrefSanitizer,removeClass,removeNodeText,setAttr,setCookie,setLocalStorageItem,closeWindow,setCookieReload];
 
-const $scriptletArgs$ = /* 165 */ ["/^bda|^bltsr/","/adblock_/","hurricane","isab","shedevrum-aab","yadb","[href*=\"url=https\"]","?url","a[href*=\"&link=https://\"]","?link","a[href*=\".mck\"][href*=\".ru/c/\"]","?u","a[href*=\".php?go=\"]","?go","a[href*=\"/away.php?\"]","?to","a[href*=\"/away?\"]","a[href*=\"/bitrix/rk.php?goto=https\"]","?goto","a[href*=\"/redir.php?r=\"]","?r","a[href*=\"/redir/\"]","?exturl","?vzurl","a[href*=\"/redirect?to=\"]","a[href*=\"://click.opennet.ru/cgi-bin/\"]","a[href*=\"://opros.mosreg.ru/callback/survey\"][href*=\"/direct_url/?redirect=\"]","?redirect","a[href*=\"?goto=https\"]","a[href*=\"?utm_\"][data-main-link]","+https","a[href*=\"deeplink=\"]","?deeplink","a[href*=\"to=aHR0c\"]","?to -base64","a[href*=\"url=aHR0c\"]","?url -base64","a[href][rel*=\"sponsored\"][target=\"_blank\"]","a[href][target=\"_blank\"]","?ulp","a[href^=\"//www.ixbt.com/click/?c=\"]","[title]","a[href^=\"/engine/dwn\"]","?xf","a[href^=\"/go/?url=https\"]","a[href^=\"http:\"][aria-label^=\"Перейти на страницу источника\"]","a[href^=\"https://click.email4customers.com/Link?\"]","?args","a[href^=\"https://go.2038.pro/\"][href*=\"?dl=\"]","?dl","a[href^=\"https://pikabu.ru/\"][href*=\"?u=http\"]","a[href^=\"https://robot.mos.ru/\"]","a[href^=\"https://rutube.ru/api/routing/\"][href*=\"away?target\"]","?target","a[href^=\"https://www.google.com/url?q=\"]","a[href^=\"https://www.gosuslugi.ru/ref?t=\"]","a[href^=\"https://www.youtube.com/redirect?event=\"][href*=\"&q=http\"]","?q","b-global-branding","html","noscroll","body","#text","РЕКЛАМНЫЙ БЛОК:","Реклама","Реклама:","div","ad-mark__b-unit-wrapper","/Ad.block|Adb-|Adblock|AdGuard/","script","decodeURIComponent(escape","/Adb-|-Gua|dGua|dblo|tick/","/adBlock|adblock-warning/","/document.head.appendChild|document.referrer/","/gtag\\('event'/","MsgNoAD","addPlaceholder","checkAdBlock","clickedOnContent","createAdblockBlock","error-report.com","getComputedStyle","message_ads","nidclick","right_click","window.location.replace","style","background: black !important;","epom-brend","lb-banner-height","._1z_ ._21_","",".comment-media .andropov-video video","controls","true",".cycle-carousel-wrap > a.bottom_slide__item > img","src","[data-src]",".drag_element a[href*=\".html\"]","target",".media .andropov-video video",".owl-item > a > img","img[src=\"https://overclockers.ru/assets/logo_gray_stub.gif\"]","video","video[controls=\"controls\"]","KUF_SUGGESTER_SHOW_2_ITERATION","1","_redirect_","0","reload","adBlockModal","age_confirmed","callToRegisterClosed","clear","ok","cookieAccepted","cookie_accept","cookie_consent_shown","ha","kuf_agr","lk-hasConsent","True","pg_SuggestGameFollow","promo-toast-tg","telegram_popup","Y","unity_pause_sso","yandexFull","pg_GPbackVideo","on","rekl_modal_shown","{}","vipler.player.live.play","false","visits-count:plus-promotion","$remove$","/dispatch","/p/?q=","utm","/adtag|creative_id/","/initTeasers|initVads/","is_age_verified","has-fullscreen-banner|has-right-direct",".public__root","stay","#progress-value","data-timer","25","DistributionLinkBro","[href^=\"https://checklink.mail.ru/proxy?\"]","[href^=\"https://click.mail.ru/redir?u=\"]","[href^=\"https://clicker.mail.ru/redir?u=\"]","violatedDirective","[data-cke-saved-href^=\"https://checklink.mail.ru/proxy?\"]",".html-fishing a",".specialcontdown > a[href^=\"/download?downloadlink=\"]","?downloadlink",".specialcontdown > a","download","rwDemo","rws","[class^=\"articleBlockVideo_\"] video[src*=\"hsmedia.ru/\"]","video[class*=\"HLSPlayback_player\"]","\"Shadow","/agl007|blockPage/"];
+const $scriptletArgs$ = /* 174 */ ["/^bda|^bltsr/","hurricane","isab","shedevrum-aab","yadb","a[href*=\"&link=https://\"]","?link","a[href*=\".mck\"][href*=\".ru/c/\"]","?u","a[href*=\".php?go=\"]","?go","a[href*=\"/away.php?\"]","?to","a[href*=\"/away?\"]","a[href*=\"/bitrix/rk.php?goto=https\"]","?goto","a[href*=\"/redir.php?r=\"]","?r","a[href*=\"/redir/\"]","?exturl","?vzurl","a[href*=\"/redirect?to=\"]","a[href*=\"://click.opennet.ru/cgi-bin/\"]","a[href*=\"://opros.mosreg.ru/callback/survey\"][href*=\"/direct_url/?redirect=\"]","?redirect","a[href*=\"?goto=https\"]","a[href*=\"?utm_\"][data-main-link]","+https","a[href*=\"deeplink=\"]","?deeplink","a[href*=\"to=aHR0c\"]","?to -base64","a[href*=\"ulp=\"][target=\"_blank\"]","?ulp","a[href*=\"url=aHR0c\"]","?url -base64","a[href][rel*=\"sponsored\"][target=\"_blank\"]","a[href^=\"//www.ixbt.com/click/?c=\"]","[title]","a[href^=\"/engine/dwn\"]","?xf","a[href^=\"http:\"][aria-label^=\"Перейти на страницу источника\"]","a[href^=\"https://click.email4customers.com/Link?\"]","?args","a[href^=\"https://go.2038.pro/\"][href*=\"?dl=\"]","?dl","a[href^=\"https://pikabu.ru/\"][href*=\"?u=http\"]","a[href^=\"https://robot.mos.ru/\"]","?url","a[href^=\"https://rutube.ru/api/routing/\"][href*=\"away?target\"]","?target","a[href^=\"https://soft2u.ru/url.php?to=\"]","a[href^=\"https://www.google.com/url?q=\"]","a[href^=\"https://www.gosuslugi.ru/ref?t=\"]","a[href^=\"https://www.livejournal.com/away?to=\"]","a[href^=\"https://www.youtube.com/redirect?event=\"][href*=\"&q=http\"]","?q","b-global-branding","html","noscroll","body","#text","РЕКЛАМНЫЙ БЛОК:","Реклама","Реклама:","a","/Установите Яндекс Браузер|Установить поиск Яндекса/","script","decodeURIComponent(escape","/A.d.b.|Adb-|A-d-b-|-Gua|dGua|dblo|tick|Адгу-/","/ABN|adsterra|adManager|atOptions|generateContent|Math.rnd|parseInt|window.open/","/document.head.appendChild|document.referrer/","/gtag\\('event'/","MsgNoAD","addPlaceholder","checkAdBlock","clickedOnContent","createAdblockBlock","error-report.com","getComputedStyle","initAdblockCheck","message_ads","nidclick","right_click","showBanner","style","epom-brend","lb-banner-height","rose.ixbt.com/banner/","._1z_ ._21_","",".comment-media .andropov-video video","controls","true",".content-custom [href*=\"?from=\"]:not([href*=\"utm\"])","target",".cycle-carousel-wrap > a.bottom_slide__item > img","src","[data-src]",".drag_element a[href*=\".html\"]",".media .andropov-video video",".owl-item > a > img","a[href*=\"?from=newsfeed\"][data-role=\"title-link\"]","img[src=\"https://overclockers.ru/assets/logo_gray_stub.gif\"]","video","video[controls=\"controls\"]","KUF_SUGGESTER_SHOW_2_ITERATION","1","adBlockModal","age_confirmed","callToRegisterClosed","clear","ok","reload","cookieAccepted","cookie_accept","cookie_consent_shown","geoid","32767","/","dontOverwrite","ha","kuf_agr","lk-hasConsent","True","pg_SuggestGameFollow","promo-toast-tg","telegram_popup","Y","unity_pause_sso","yandexFull","__videoboxActive","false","headerBannerShownAt","pg_GPbackVideo","on","rekl_modal_shown","{}","vipler.player.live.play","visits-count:plus-promotion","$remove$","/acestream/i","/dispatch","/p/?q=","utm","/adtag|creative_id/","/initTeasers|initVads/","is_age_verified","has-fullscreen-banner|has-right-direct",".public__root","stay","[href*=\"url=https\"]","#progress-value","data-timer","25","DistributionLinkBro","[href^=\"https://checklink.mail.ru/proxy?\"]","[href^=\"https://click.mail.ru/redir?u=\"]","[href^=\"https://clicker.mail.ru/redir?u=\"]","violatedDirective","[data-cke-saved-href^=\"https://checklink.mail.ru/proxy?\"]",".html-fishing a",".specialcontdown > a[href^=\"/download?downloadlink=\"]","?downloadlink",".specialcontdown > a","download","is_mobile","no","rwDemo","rws","[class^=\"articleBlockVideo_\"] video[src*=\"hsmedia.ru/\"]","video[class*=\"HLSPlayback_player\"]","\"Shadow","/agl007|blockPage/"];
 
-const $scriptletArglists$ = /* 118 */ "0,0;0,1;0,2;0,3;0,4;0,5;1,6,7;1,8,9;1,10,11;1,12,13;1,14,15;1,16,15;1,17,18;1,19,20;1,21,22;1,21,23;1,24,15;1,25,15;1,26,27;1,28,18;1,29,30;1,31,32;1,33,34;1,35,36;1,37,18;1,38,39;1,40,41;1,42,43;1,44,7;1,45,30;1,46,47;1,48,49;1,50,11;1,51,7;1,52,53;1,54;1,55,15;1,56,57;2,58,59;2,60,61;3,62,63;3,62,64;3,62,65;3,66,67;3,66,68;3,69,70;3,69,71;3,69,72;3,69,73;3,69,74;3,69,75;3,69,76;3,69,77;3,69,78;3,69,79;3,69,80;3,69,81;3,69,82;3,69,83;3,69,84;3,69,85;3,86,87;3,86,88;3,86,89;4,90,86,91;4,92,93,94;4,95,96,97;4,98,99,94;4,100,93,94;4,101,96,97;4,102,96,97;4,103,93,94;4,104,93,94;5,105,106;5,107,108,91,109,106;5,110,94;5,111,106;5,112,94;5,113,114,91,109,106;5,115,94;5,116,106;5,117,106;5,118,106;5,119,94;5,120,121;5,122,94;5,123,94;5,124,125;5,126,106,91,109,106;5,127,94;6,128,129;6,130,131;6,132,133;6,134,135;7;7,136;7,137;7,138;7,139;3,69,140;8,141,106;2,142,143,144;4,145,146,147;3,69,148;1,149,7;1,150,11;1,151,11;3,69,152;1,153;4,154,99,94;1,155,156;4,157,158;6,159,135;6,160,135;4,161,93,94;4,162,93,94;3,69,163;3,69,164";
+const $scriptletArglists$ = /* 124 */ "0,0;0,1;0,2;0,3;0,4;1,5,6;1,7,8;1,9,10;1,11,12;1,13,12;1,14,15;1,16,17;1,18,19;1,18,20;1,21,12;1,22,12;1,23,24;1,25,15;1,26,27;1,28,29;1,30,31;1,32,33;1,34,35;1,36,15;1,37,38;1,39,40;1,41,27;1,42,43;1,44,45;1,46,8;1,47,48;1,49,50;1,51,12;1,52;1,53,12;1,54,12;1,55,56;2,57,58;2,59,60;3,61,62;3,61,63;3,61,64;3,65,66;3,67,68;3,67,69;3,67,70;3,67,71;3,67,72;3,67,73;3,67,74;3,67,75;3,67,76;3,67,77;3,67,78;3,67,79;3,67,80;3,67,81;3,67,82;3,67,83;3,67,84;3,85,86;3,85,87;3,85,88;4,89,85,90;4,91,92,93;4,94,95,93;4,96,97,98;4,99,95,93;4,100,92,93;4,101,97,98;4,102,95,93;4,103,97,98;4,104,92,93;4,105,92,93;5,106,107;5,108,93;5,109,107;5,110,93;5,111,112,90,113,107;5,114,93;5,115,107;5,116,107;5,117,118,119,120,107;5,121,107;5,122,93;5,123,124;5,125,93;5,126,93;5,127,128;5,129,107,90,113,107;5,130,93;6,131,132;6,133,107;6,134,135;6,136,137;6,138,132;6,139,140;7;7,141;7,142;7,143;7,144;7,145;3,67,146;8,147,107;2,148,149,150;1,151,48;4,152,153,154;3,67,155;1,156,48;1,157,8;1,158,8;3,67,159;1,160;4,161,95,93;1,162,163;4,164,165;5,166,167,90,113,107;6,168,140;6,169,140;4,170,92,93;4,171,92,93;3,67,172;3,67,173";
 
-const $scriptletArglistRefs$ = /* 266 */ "116;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;114;92;114;116;0,91;116;114;16,31,65,68,93;10;14,15;43,103;114;114;114;114;114;16,65,68,93;114;10;88;54;11;114;107;114;88;0;115;114;116;114;1;81;114;116;88;6,25;97;116;80;0,73,83;88;79,116;116;88;114;114;114;114;114;42;103;98;3;72;116;2;8,18,30,33,36,-108,108,109;116;56;88;116;57;102;22,44,46,62,117;114;116;87;114;110,111;44,46,62,117;98;32,51;34;114;52,63;116;22;94;116;116;116;69;99,100;28,66,67;12;116;116;88;110,111;106,-108;75;78;78;45;-108;17;17;88;20,29;71;47;23;116;116;-108;10;110,111;53;-108;77;116;41;116;116;23;116;110,111;-108;88;78;110,111;35;0;86;22;59;61;114;-108;116;37;53;-108;-108;110,111;110,111;-108;44,46,62,117;88;-108;-108;88;5;-108;-108;-108;38;39;6,89;99,100;-108;55;116;-108;116;116;44,46,62,117;44,46,62,117;44,46,62,117;88;4;110,111;48;114;27;26;-108;-108;-108;101;-108;116;-108;71;12;24,25;104,105;116;40;-108;112,113;85,90;116;50;9;-108;53;116;116;88;99,100;101;116;116;82;-108;49,116;21;8,18,30,33,36;64;-108;13;116;-108;-108;19;76;0;-108;110,111;-108;-108;58;84;8,18,30,33,36;116;70;44,46,62,117;99,100;114;0;-108;114;-108;114;116;116;116;-108;42;8,18,30,33,36,-108,108,109;95;96;60,74;-108;0;116;116;-108;116;-108;116;7";
+const $scriptletArglistRefs$ = /* 281 */ "122;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;120;59;95;82;120;122;0,94;122;120;14,28,64,68,96;8;12,13;42,108;120;120;120;120;120;14,64,68,96;120;65,70;8;89;52;9;120;112;120;59;89;0;121;120;122;120;81;98;120;122;89;21,106;101;122;80;0,74,84;89;79,122;122;89;120;120;120;120;120;41;108;102;2;73;122;1;6,16,27,30,34,-113,113,114;122;54;89;122;56;107;20,44,60,106,123;120;122;88;120;115,116;44,60,106,123;102;21,29,49;31;120;32;50,61;122;20;97;122;122;122;69;103,104;66,67,106;10;59;122;122;89;115,116;111,-113;75;78;78;43;15;15;89;18,26;72;55;22;106;122;122;-113;117;8;115,116;51;-113;77;122;40;45;122;122;59;22;122;115,116;-113;89;78;115,116;33;0;87;20;58;120;-113;117;122;36;51;-113;-113;115,116;115,116;-113;92;44,60,106,123;89;-113;-113;89;4;-113;-113;-113;37;38;90,106;103,104;-113;53;122;-113;122;122;44,60,123;44,60,123;44,60,123;89;3;115,116;46;120;25;24,62;-113;-113;89;-113;105;-113;122;-113;72;10;21,23;109,110;122;39;-113;118,119;86,93;122;48;7;-113;51;122;122;89;103,104;105;122;122;83;-113;47,122;19;117;6,16,27,30,34;63;-113;11;122;-113;17;76;0;-113;115,116;-113;-113;57;117;35;85;6,16,27,30,34;122;-46;71;44,60,106,123;103,104;120;0;-113;120;-113;120;122;122;122;-113;41;6,16,27,30,34,-113,113,114;99;91;100;-113;0;91;122;122;-113;122;-113;122;5";
 
-const $scriptletHostnames$ = /* 266 */ ["i.ua","14.ru","26.ru","29.ru","35.ru","43.ru","45.ru","48.ru","51.ru","53.ru","56.ru","59.ru","60.ru","63.ru","68.ru","71.ru","72.ru","74.ru","76.ru","86.ru","89.ru","93.ru","e1.ru","iz.ru","nn.ru","nv.ua","rg.ru","tv.ua","v1.ru","vc.ru","vk.ru","vz.ru","ya.ru","116.ru","161.ru","164.ru","173.ru","178.ru","dtf.ru","ngs.ru","vk.com","wmj.ru","ahen.me","dzen.ru","izh1.ru","mail.ru","msk1.ru","quto.ru","sm.news","tass.ru","ufa1.ru","viva.ua","ya62.ru","yapx.ru","avito.ru","chita.ru","dengi.ua","ferra.ru","hot.game","infox.sg","ivona.ua","ixbt.com","kufar.by","lenta.ru","liga.net","meteo.ua","motor.ru","ngs22.ru","ngs24.ru","ngs42.ru","ngs55.ru","ngs70.ru","utorr.cc","yandex.*","24parik.*","24smi.org","3dnews.ru","ditey.com","drive2.ru","e.mail.ru","factor.ua","fapvdo.ru","gazeta.ru","gazeta.ua","gsm.in.ua","howdyho.*","innal.top","ircity.ru","isport.ua","kinotv.ru","mgorsk.ru","my-lib.ru","naylo.top","parik24.*","pikabu.ru","rutube.ru","sochi1.ru","uwupad.me","vsetv.com","zannn.top","aj2738.top","bigmir.net","bilshe.com","censor.net","eneyida.tv","fap-guru.*","fishki.net","freehat.cc","hvylya.net","kolobok.ua","letidor.ru","litruso.ru","my.mail.ru","myshows.me","nnmclub.ro","nnmclub.to","nullcms.ru","o2.mail.ru","opennet.me","opennet.ru","passion.ru","rambler.ru","reactor.cc","ritsatv.ru","rsload.net","stravy.net","tochka.net","tv.mail.ru","vkvideo.ru","x-libri.ru","agronews.ua","biz.mail.ru","direct.farm","facenews.ua","farposst.ru","glianec.com","gorod.dp.ua","kichkas.biz","kriminal.tv","lit-web.net","mcs.mail.ru","moslenta.ru","nnm-club.me","novkniga.ru","nsportal.ru","relax-fm.ru","remanga.org","seedoff.net","sichnews.ua","stratege.ru","tolyatty.ru","top.mail.ru","www.ukr.net","youtube.com","agroweek.com","auto.mail.ru","blog.mail.ru","bookdream.ru","booksreed.ru","deti.mail.ru","game4you.top","gazeta.press","help.mail.ru","horo.mail.ru","indicator.ru","kakprosto.ru","kino.mail.ru","lady.mail.ru","love.mail.ru","mag.relax.by","motorpage.ru","mp3party.net","mult-porno.*","news.mail.ru","newsyou.info","panno4ka.net","pets.mail.ru","pogodaua.com","real-vin.com","rustorka.com","rustorka.net","rustorka.top","secretmag.ru","shedevrum.ai","skanbooks.ru","tapochek.net","voronezh1.ru","wotspeak.org","www.ixbt.com","bonus.mail.ru","calls.mail.ru","cloud.mail.ru","disk.yandex.*","dobro.mail.ru","football24.ua","gibdd.mail.ru","joyreactor.cc","lalapaluza.ru","lifehacker.ru","light.mail.ru","nnovosti.info","online-fix.me","otvet.mail.ru","patephone.com","playground.ru","pravda.com.ua","questtime.net","softoroom.org","touch.mail.ru","agroreview.com","avtovod.com.ua","businessua.com","championat.com","cosplay-porn.*","disk.yandex.ru","epravda.com.ua","f1analytic.com","forum.ixbt.com","health.mail.ru","inforesist.org","kluchikipro.ru","mail.yandex.ru","playvillage.ru","pogoda.mail.ru","stalkermods.ru","24boxing.com.ua","3igames.mail.ru","account.mail.ru","appleinsider.ru","champion.com.ua","comedy-radio.ru","connect.mail.ru","electrobooks.ru","finance.mail.ru","hi-tech.mail.ru","kriminal.net.ua","lk.emias.mos.ru","mail.rambler.ru","meteofor.com.ua","overclockers.ru","rustorkacom.lib","sex-studentki.*","sterlitamak1.ru","veseloeradio.ru","vfokuse.mail.ru","vladivostok1.ru","widgets.mail.ru","www.fontanka.ru","zdorovia.com.ua","buhgalter.com.ua","buhgalter911.com","calendar.mail.ru","filmitorrent.net","octavius.mail.ru","silvercube12.xyz","tv.acestream.org","disgustingmen.com","minigames.mail.ru","radioromantika.ru","sportanalytic.com","footballgazeta.com","okminigames.mail.ru","football-ukraine.com","player-smotri.mail.ru","footballtransfer.com.ua","portalvirtualreality.ru"];
+const $scriptletHostnames$ = /* 281 */ ["i.ua","14.ru","26.ru","29.ru","35.ru","43.ru","45.ru","48.ru","51.ru","53.ru","56.ru","59.ru","60.ru","63.ru","68.ru","71.ru","72.ru","74.ru","76.ru","86.ru","89.ru","93.ru","e1.ru","eg.ru","iz.ru","kp.ru","nn.ru","nv.ua","rg.ru","tv.ua","v1.ru","vc.ru","vk.ru","vz.ru","ya.ru","116.ru","161.ru","164.ru","173.ru","178.ru","dtf.ru","ngs.ru","rbc.ru","vk.com","wmj.ru","ahen.me","dzen.ru","izh1.ru","mail.ru","msk1.ru","ng72.ru","quto.ru","sm.news","tass.ru","ufa1.ru","viva.ua","ya62.ru","avito.ru","beton.ua","chita.ru","dengi.ua","ferra.ru","hot.game","infox.sg","ivona.ua","ixbt.com","kufar.by","lenta.ru","liga.net","meteo.ua","motor.ru","ngs22.ru","ngs24.ru","ngs42.ru","ngs55.ru","ngs70.ru","utorr.cc","yandex.*","24parik.*","24smi.org","3dnews.ru","ditey.com","drive2.ru","e.mail.ru","factor.ua","fapvdo.ru","gazeta.ru","gazeta.ua","gsm.in.ua","howdyho.*","innal.top","ircity.ru","isport.ua","kinotv.ru","mgorsk.ru","my-lib.ru","naylo.top","parik24.*","pikabu.ru","rutube.ru","sochi1.ru","soft2u.ru","uwupad.me","vsetv.com","zannn.top","aj2738.top","bigmir.net","bilshe.com","censor.net","eneyida.tv","fap-guru.*","fishki.net","freehat.cc","gorodvo.ru","hvylya.net","kolobok.ua","letidor.ru","litruso.ru","my.mail.ru","myshows.me","nnmclub.ro","nnmclub.to","nullcms.ru","opennet.me","opennet.ru","passion.ru","rambler.ru","reactor.cc","ritsatv.ru","rsload.net","rustorka.*","stravy.net","tochka.net","tv.mail.ru","vgtimes.ru","vkvideo.ru","x-libri.ru","agronews.ua","biz.mail.ru","direct.farm","facenews.ua","farposst.ru","fastpic.org","glianec.com","gorod.dp.ua","gorodche.ru","kichkas.biz","kriminal.tv","lit-web.net","mcs.mail.ru","moslenta.ru","nnm-club.me","novkniga.ru","nsportal.ru","relax-fm.ru","remanga.org","seedoff.net","sichnews.ua","tolyatty.ru","top.mail.ru","vgtimes.com","www.ukr.net","youtube.com","agroweek.com","auto.mail.ru","blog.mail.ru","bookdream.ru","booksreed.ru","deti.mail.ru","finuslugi.ru","game4you.top","gazeta.press","help.mail.ru","horo.mail.ru","indicator.ru","kakprosto.ru","kino.mail.ru","lady.mail.ru","love.mail.ru","mag.relax.by","motorpage.ru","mp3party.net","mult-porno.*","news.mail.ru","newsyou.info","panno4ka.net","pets.mail.ru","pogodaua.com","real-vin.com","rustorka.com","rustorka.net","rustorka.top","secretmag.ru","shedevrum.ai","skanbooks.ru","tapochek.net","voronezh1.ru","wotspeak.org","www.ixbt.com","bonus.mail.ru","calls.mail.ru","championat.ru","cloud.mail.ru","disk.yandex.*","dobro.mail.ru","football24.ua","gibdd.mail.ru","joyreactor.cc","lalapaluza.ru","lifehacker.ru","light.mail.ru","nnovosti.info","online-fix.me","otvet.mail.ru","patephone.com","playground.ru","pravda.com.ua","questtime.net","softoroom.org","touch.mail.ru","agroreview.com","avtovod.com.ua","businessua.com","championat.com","cosplay-porn.*","disk.yandex.ru","epravda.com.ua","f1analytic.com","forum.ixbt.com","health.mail.ru","inforesist.org","kluchikipro.ru","libertycity.ru","mail.yandex.ru","playvillage.ru","pogoda.mail.ru","stalkermods.ru","24boxing.com.ua","3igames.mail.ru","appleinsider.ru","champion.com.ua","comedy-radio.ru","connect.mail.ru","electrobooks.ru","finance.mail.ru","hi-tech.mail.ru","kriminal.net.ua","libertycity.net","livejournal.com","lk.emias.mos.ru","mail.rambler.ru","meteofor.com.ua","new.fastpic.org","overclockers.ru","rustorkacom.lib","sex-studentki.*","sterlitamak1.ru","veseloeradio.ru","vfokuse.mail.ru","vladivostok1.ru","widgets.mail.ru","www.fontanka.ru","zdorovia.com.ua","buhgalter.com.ua","buhgalter911.com","calendar.mail.ru","filmitorrent.net","octavius.mail.ru","silvercube12.xyz","sport-express.ru","tv.acestream.org","minigames.mail.ru","radioromantika.ru","sport-express.net","sportanalytic.com","footballgazeta.com","okminigames.mail.ru","football-ukraine.com","player-smotri.mail.ru","footballtransfer.com.ua","portalvirtualreality.ru"];
 
 const $scriptletFromRegexes$ = /* 0 */ [];
 
@@ -1062,18 +1056,22 @@ const entries = (( ) => {
         const hn1 = origin.slice(beg+3)
         const end = hn1.indexOf(':');
         const hn2 = end === -1 ? hn1 : hn1.slice(0, end);
-        const hnParts = hn2.split('.');
         if ( hn2.length === 0 ) { return; }
-        const hns = [];
-        for ( let i = 0; i < hnParts.length; i++ ) {
-            hns.push(`${hnParts.slice(i).join('.')}`);
+        const hns = [ hn2 ];
+        for ( let pos = 0; ; ) {
+            pos = hn2.indexOf('.', pos) + 1;
+            if ( pos === 0 ) { break; }
+            hns.push(hn2.slice(pos));
         }
+        hns.push('*');
         const ens = [];
         if ( $hasEntities$ ) {
-            const n = hnParts.length - 1;
-            for ( let i = 0; i < n; i++ ) {
-                for ( let j = n; j > i; j-- ) {
-                    ens.push(`${hnParts.slice(i,j).join('.')}.*`);
+            for ( let hn of hns ) {
+                for (;;) {
+                    const pos = hn.lastIndexOf('.');
+                    if ( pos === -1 ) { break; }
+                    hn = hn.slice(0, pos);
+                    ens.push(`${hn}.*`);
                 }
             }
             ens.sort((a, b) => {
@@ -1083,55 +1081,55 @@ const entries = (( ) => {
             });
         }
         return { hns, ens, i };
-    }).filter(a => a !== undefined);
+    }).filter(a => a);
 })();
 if ( entries.length === 0 ) { return; }
 
-const collectArglistRefIndices = (out, hn, r) => {
-    let l = 0, i = 0, d = 0;
-    let candidate = '';
-    while ( l < r ) {
-        i = l + r >>> 1;
-        candidate = $scriptletHostnames$[i];
-        d = hn.length - candidate.length;
-        if ( d === 0 ) {
-            if ( hn === candidate ) {
-                out.add(i); break;
-            }
-            d = hn < candidate ? -1 : 1;
-        }
-        if ( d < 0 ) {
-            r = i;
-        } else {
-            l = i + 1;
-        }
-    }
-    return i;
-};
-
-const indicesFromHostname = (out, hnDetails, suffix = '') => {
-    if ( hnDetails.hns.length === 0 ) { return; }
-    let r = $scriptletHostnames$.length;
-    for ( const hn of hnDetails.hns ) {
-        r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
-    }
-    if ( $hasEntities$ ) {
-        let r = $scriptletHostnames$.length;
-        for ( const en of hnDetails.ens ) {
-            r = collectArglistRefIndices(out, `${en}${suffix}`, r);
-        }
-    }
-};
-
 const todoIndices = new Set();
-indicesFromHostname(todoIndices, entries[0]);
-if ( $hasAncestors$ ) {
-    for ( const entry of entries ) {
-        if ( entry.i === 0 ) { continue; }
-        indicesFromHostname(todoIndices, entry, '>>');
+if ( $scriptletHostnames$.length ) {
+    const collectArglistRefIndices = (out, hn, r) => {
+        let l = 0, i = 0, d = 0;
+        let candidate = '';
+        while ( l < r ) {
+            i = l + r >>> 1;
+            candidate = $scriptletHostnames$[i];
+            d = hn.length - candidate.length;
+            if ( d === 0 ) {
+                if ( hn === candidate ) {
+                    out.add(i); break;
+                }
+                d = hn < candidate ? -1 : 1;
+            }
+            if ( d < 0 ) {
+                r = i;
+            } else {
+                l = i + 1;
+            }
+        }
+        return i + 1;
+    };
+    const indicesFromHostname = (out, hnDetails, suffix = '') => {
+        if ( hnDetails.hns.length === 0 ) { return; }
+        let r = $scriptletHostnames$.length;
+        for ( const hn of hnDetails.hns ) {
+            r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
+        }
+        if ( $hasEntities$ ) {
+            let r = $scriptletHostnames$.length;
+            for ( const en of hnDetails.ens ) {
+                r = collectArglistRefIndices(out, `${en}${suffix}`, r);
+            }
+        }
+    };
+    indicesFromHostname(todoIndices, entries[0]);
+    if ( $hasAncestors$ ) {
+        for ( const entry of entries ) {
+            if ( entry.i === 0 ) { continue; }
+            indicesFromHostname(todoIndices, entry, '>>');
+        }
     }
+    $scriptletHostnames$.length = 0;
 }
-$scriptletHostnames$.length = 0;
 
 // Collect arglist references
 const todo = new Set();

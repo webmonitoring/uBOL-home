@@ -709,6 +709,20 @@ function objectPruneFn(
     if ( outcome === 'match' ) { return obj; }
 }
 
+function offIdleFn(id) {
+    if ( self.requestIdleCallback ) {
+        return self.cancelIdleCallback(id);
+    }
+    return self.cancelAnimationFrame(id);
+}
+
+function onIdleFn(fn, options) {
+    if ( self.requestIdleCallback ) {
+        return self.requestIdleCallback(fn, options);
+    }
+    return self.requestAnimationFrame(fn);
+}
+
 function parsePropertiesToMatchFn(propsToMatch, implicit = '') {
     const safe = safeSelf();
     const needles = new Map();
@@ -1271,14 +1285,14 @@ function removeAttr(
     let timerId;
     const rmattrAsync = ( ) => {
         if ( timerId !== undefined ) { return; }
-        timerId = safe.onIdle(( ) => {
+        timerId = onIdleFn(( ) => {
             timerId = undefined;
             rmattr();
         }, { timeout: 17 });
     };
     const rmattr = ( ) => {
         if ( timerId !== undefined ) {
-            safe.offIdle(timerId);
+            offIdleFn(timerId);
             timerId = undefined;
         }
         try {
@@ -1484,18 +1498,6 @@ function safeSelf() {
             }, []);
             return this.Object_fromEntries(entries);
         },
-        onIdle(fn, options) {
-            if ( self.requestIdleCallback ) {
-                return self.requestIdleCallback(fn, options);
-            }
-            return self.requestAnimationFrame(fn);
-        },
-        offIdle(id) {
-            if ( self.requestIdleCallback ) {
-                return self.cancelIdleCallback(id);
-            }
-            return self.cancelAnimationFrame(id);
-        }
     };
     scriptletGlobals.safeSelf = safe;
     if ( scriptletGlobals.bcSecret === undefined ) { return safe; }
@@ -1773,15 +1775,15 @@ function validateConstantFn(trusted, raw, extraArgs = {}) {
 const scriptletGlobals = {}; // eslint-disable-line
 
 const $scriptletFunctions$ = /* 15 */
-[setConstant,preventFetch,preventSetTimeout,jsonPrune,abortCurrentScript,preventAddEventListener,preventRequestAnimationFrame,preventXhr,abortOnPropertyRead,abortOnPropertyWrite,preventSetInterval,adjustSetInterval,adjustSetTimeout,removeAttr,noWindowOpenIf];
+[preventSetTimeout,setConstant,preventFetch,jsonPrune,abortCurrentScript,preventAddEventListener,preventRequestAnimationFrame,preventXhr,abortOnPropertyRead,abortOnPropertyWrite,preventSetInterval,adjustSetInterval,adjustSetTimeout,removeAttr,noWindowOpenIf];
 
-const $scriptletArgs$ = /* 144 */ ["__NEXT_DATA__.runtimeConfig._qub_sdk.qubConfig.ad.adBlockerDetectorEnabled","false","pagead2.googlesyndication.com","displayCookieWallBanner","siteParams.aabMessage","LCI.adNetwork","undefined","jQuery","adblocker","penci_options_set.ad_blocker_detector","ima","{}","DOMContentLoaded","adblock","integrityObserver.corrupted","0","checkAdsBlocked","noopFunc","Date.now","dAp","true","detected","isAdblock","load","/www3\\.doubleclick\\.net|tagger\\.opecloud\\.com|fwmrm\\.net/","emptyArr","chp_ads_blocker_detector","adsBlocked","tag.min.js","fwmrm","checkDiv","navigator.brave","js.sddan.com","ABDetector","document.getElementById","Blocking Ads","document.createElement","moneyAbovePrivacy","bAdBlocker","Object.prototype.autoRecov","noPub","1","canRunAds","adClasses","[]","dtctAB","adskeeper.co.uk","document.write","alert","setTimeout","bloqueur","Promise","window.location","msg_ab","gothamBatAdblock","adblockdetected","adsbygoogle","document.querySelector","oadbActive","window.adsapp","ujloijdkhjkwus","$","checkAds","wIsAdBlocked","mdpDeBlocker","adBlockDetected","adback","google_jobrunner","adParams siteParams.aabMessage","onload","ptv.Data.uniroll","pmd.Data.uniroll","OAS_AD","ads.enableAntiAdBlocking","v.fwmrm.net","Object.prototype.isBlockerDetected","__TF1_CONFIG__.featureFlag.contentAccess.isAdblockCheckRequired","__TF1_CONFIG__.adblock.display","__TF1_CONFIG__.adblock.serverRequest","static.adsafeprotected.com/favicon.ico","/^https:\\/\\/ads\\.stickyadstv\\.com\\/$/ method:HEAD","defaultConsentString","*","0.001","event_listener_timeout","/userConsentProcess|this===/","href","a[href]#clickfakeplayer","return t()","sessionStorage","click","Popup","advanced_ads_ready","userConsentProcessEnded","randno","25","FastClick","FastClick.attach","setTimeoutIds_",".content-propose > a[href].btn-ad-iframe","empire.isAdbActive","empire.directHideAds","empire.countpremium.film","empire.countpremium.serie","empire.countpremiumMore.film.count","empire.countpremiumMore.serie.count","empire.countpremiumaccount.film","empire.countpremiumaccount.serie","empire.mediaData.advisorDirect","","empire.mediaData.advisorMovie","empire.mediaData.advisorSerie","adsConfig","isSetupAccess","/userConsentProcessEnded|\\[0\\]\\+\"With\"/","interstitial","JSON.parse","document.createElement('script')","document.documentElement).appendChild","Object.prototype.withAds","AC.config.ads","getAudioAdUrl","zoneSett","aEteAffiche","__yget_ad_list","_adb","td_ad_background_click_link","__data.application.settings.featPlayerAds","ads.*.default ads.*.url ads.enableMidrolls","ads","applaunch.data.player.features.ad.enabled applaunch.data.player.features.ad.dai.enabled","appName","tv.freewheel.SDK.Util.pingURLWithForm","trueFunc","tv.freewheel.SDK.Util.pingURLWithImage","tv.freewheel.SDK.Util.pingURLWithScript","tv.freewheel.SDK.Util.pingURLWithXMLHTTPRequest","tv.freewheel.SDK.Util.sendAdRequestWithXMLHTTPRequest","__NEXT_DATA__.runtimeConfig.playerTF1.ads.enable","data.result.items.sidebar.[-].type.[=].advertiser_ads","data.search_id","fetch","Uint8Array","#clickfakeplayer"];
+const $scriptletArgs$ = /* 149 */ ["/siteAccessNotification|checkBaitElement/","rhoostatus","100","__NEXT_DATA__.runtimeConfig._qub_sdk.qubConfig.ad.adBlockerDetectorEnabled","false","pagead2.googlesyndication.com","displayCookieWallBanner","siteParams.aabMessage","LCI.adNetwork","undefined","jQuery","adblocker","penci_options_set.ad_blocker_detector","ima","{}","DOMContentLoaded","adblock","integrityObserver.corrupted","0","checkAdsBlocked","noopFunc","Date.now","dAp","true","detected","isAdblock","load","/www3\\.doubleclick\\.net|tagger\\.opecloud\\.com|fwmrm\\.net/","emptyArr","chp_ads_blocker_detector","adsBlocked","tag.min.js","fwmrm","checkDiv","navigator.brave","js.sddan.com","ABDetector","document.getElementById","Blocking Ads","document.createElement","moneyAbovePrivacy","bAdBlocker","Object.prototype.autoRecov","noPub","1","canRunAds","adClasses","[]","dtctAB","adskeeper.co.uk","document.write","alert","setTimeout","bloqueur","Promise","window.location","msg_ab","gothamBatAdblock","adblockdetected","adsbygoogle","document.querySelector","oadbActive","window.adsapp","ujloijdkhjkwus","$","checkAds","wIsAdBlocked","mdpDeBlocker","adBlockDetected","adback","google_jobrunner","adParams siteParams.aabMessage","onload","ptv.Data.uniroll","pmd.Data.uniroll","OAS_AD","ads.enableAntiAdBlocking","v.fwmrm.net","Object.prototype.isBlockerDetected","__TF1_CONFIG__.featureFlag.contentAccess.isAdblockCheckRequired","__TF1_CONFIG__.adblock.display","__TF1_CONFIG__.adblock.serverRequest","static.adsafeprotected.com/favicon.ico","/^https:\\/\\/ads\\.stickyadstv\\.com\\/$/ method:HEAD","defaultConsentString","*","0.001","event_listener_timeout","/userConsentProcess|this===/","href","a[href]#clickfakeplayer","return t()","sessionStorage","click","Popup","advanced_ads_ready","userConsentProcessEnded","randno","25","FastClick","FastClick.attach","setTimeoutIds_",".content-propose > a[href].btn-ad-iframe","empire.isAdbActive","empire.directHideAds","empire.countpremium.film","empire.countpremium.serie","empire.countpremiumMore.film.count","empire.countpremiumMore.serie.count","empire.countpremiumaccount.film","empire.countpremiumaccount.serie","empire.mediaData.advisorDirect","","empire.mediaData.advisorMovie","empire.mediaData.advisorSerie","adsConfig","isSetupAccess","/userConsentProcessEnded|\\[0\\]\\+\"With\"/","interstitial","JSON.parse","document.createElement('script')","document.documentElement).appendChild","Object.prototype.withAds","AC.config.ads","getAudioAdUrl","zoneSett","aEteAffiche","__yget_ad_list","_adb","td_ad_background_click_link","Object.prototype.sendPauseMidrollTracking","__data.application.settings.featPlayerAds","ads.*.default ads.*.url ads.enableMidrolls","ads","applaunch.data.player.features.ad.enabled applaunch.data.player.features.ad.dai.enabled","appName","tv.freewheel.SDK.Util.pingURLWithForm","trueFunc","tv.freewheel.SDK.Util.pingURLWithImage","tv.freewheel.SDK.Util.pingURLWithScript","tv.freewheel.SDK.Util.pingURLWithXMLHTTPRequest","tv.freewheel.SDK.Util.sendAdRequestWithXMLHTTPRequest","__NEXT_DATA__.runtimeConfig.playerTF1.ads.enable","<=1?(clearInterval","data.result.items.sidebar.[-].type.[=].advertiser_ads","data.search_id","fetch","Uint8Array","#clickfakeplayer"];
 
-const $scriptletArglists$ = /* 123 */ "0,0,1;1,2;2,3;3,4;0,5,6;4,7,8;0,9,1;0,10,11;5,12,13;0,14,15;0,16,17;6,18;0,19,20;2,21;7,2;2,22;5,12,22;5,23,22;1,24,25;4,26;8,27;1,28;1,29;0,30,17;0,31,6;1,32;8,33;4,34,35;4,36,13;0,37,20;0,38,1;8,39;0,40,41;0,42,20;0,43,44;9,45;1,46;4,47,48;4,49,50;4,51,48;10,52;4,34,53;8,54;0,55,1;10,56;5,12,56;0,14,1;4,57,58;0,59,20;0,60,1;4,61,62;0,63,1;8,64;0,65,1;4,34,66;2,56;0,67,17;3,68;8,69;0,70,11;0,71,11;0,72,17;3,73;7,74;0,75,1;0,76,1;0,77,1;0,78,1;1,79;1,80;11,81,82,83;12,84,82,83;12,85,82,83;13,86,87;12,88,82,83;2,89;5,90,91;0,92,17;12,93,82,83;14;2,94,95;0,96,17;0,97,17;12,98,82,83;13,86,99;0,100,1;0,101,6;0,102,15;0,103,15;0,104,15;0,105,15;0,106,15;0,107,15;0,108,109;0,110,41;0,111,41;0,112,44;0,113,20;12,114,82,83;5,12,115;4,116,117;4,36,118;0,119,1;0,120,11;0,121,17;8,122;0,123,20;8,124;8,125;9,126;0,127,1;3,128,129;3,130,131;0,132,133;0,134,133;0,135,133;0,136,133;0,137,133;0,138,1;3,139,140;4,141,142;13,86,143;9,124";
+const $scriptletArglists$ = /* 127 */ "0,0;0,1,2;1,3,4;2,5;0,6;3,7;1,8,9;4,10,11;1,12,4;1,13,14;5,15,16;1,17,18;1,19,20;6,21;1,22,23;0,24;7,5;0,25;5,15,25;5,26,25;2,27,28;4,29;8,30;2,31;2,32;1,33,20;1,34,9;2,35;8,36;4,37,38;4,39,16;1,40,23;1,41,4;8,42;1,43,44;1,45,23;1,46,47;9,48;2,49;4,50,51;4,52,53;4,54,51;10,55;4,37,56;8,57;1,58,4;10,59;5,15,59;1,17,4;4,60,61;1,62,23;1,63,4;4,64,65;1,66,4;8,67;1,68,4;4,37,69;0,59;1,70,20;3,71;8,72;1,73,14;1,74,14;1,75,20;3,76;7,77;1,78,4;1,79,4;1,80,4;1,81,4;2,82;2,83;11,84,85,86;12,87,85,86;12,88,85,86;13,89,90;12,91,85,86;0,92;5,93,94;1,95,20;12,96,85,86;14;0,97,98;1,99,20;1,100,20;12,101,85,86;13,89,102;1,103,4;1,104,9;1,105,18;1,106,18;1,107,18;1,108,18;1,109,18;1,110,18;1,111,112;1,113,44;1,114,44;1,115,47;1,116,23;12,117,85,86;5,15,118;4,119,120;4,39,121;1,122,4;1,123,14;1,124,20;8,125;1,126,23;8,127;8,128;9,129;1,130,20;1,131,4;3,132,133;3,134,135;1,136,137;1,138,137;1,139,137;1,140,137;1,141,137;1,142,4;11,143,85,86;3,144,145;4,146,147;13,89,148;9,127";
 
-const $scriptletArglistRefs$ = /* 117 */ "63,64,113,114,115,116,117;102;7;30;104;65,66,67,68,69,113,114,115,116,117;102;99;104;83;30;30;31;102;42;109;21;22;75,79;59,60;119;105;102;106;100,101;1;112;10,35;61;30;68,69,70,118;7;103;52;23;14,26;104;28;25;32;61;74;14,35;121;48;11,12,13;2;102;80;56;33;43;41;5,6;107;62,110,111;53;58;83;27;8,43;42;14;40;36,37,38,39;122;58;77;78;72;50;1;18;73;98;0;15,16,17;79,85,86,87,88,89,90,91,92;49;4;108;57;54;71;55;14,24,79,85,86,87,88,89,90,91,92,93,94,95;102;3;102;102;96;24;24,79,85,86,87,88,89,90,91,92;51;120;73;19;54;14,24,79,84,85,86,87,88,89,90,91,92,93,94,95;5,6;34;1;33;1;47;3,46;97;3,9;1;1,29;1;44,45;81,82;20;1;1;76";
+const $scriptletArglistRefs$ = /* 120 */ "65,66,116,117,118,119,120;104;9;32;106;67,68,69,70,71,116,117,118,119,120;104;101;106;85;32;32;33;104;44;111;23;24;77,81;61,62;123;107;104;108;102,103;3;115;12,37;63;32;70,71,72,121;9;105;54;25;16,28;106;30;27;34;63;76;16,37;125;50;13,14,15;4;104;82;58;35;45;43;7,8;109;64,113,114;55;60;85;29;81,122;1,10,45;44;16;42;38,39,40,41;126;60;79;80;74;52;3;20;75;100;2;17,18,19;81,87,88,89,90,91,92,93,94;51;6;110;59;56;73;57;16,26,81,87,88,89,90,91,92,93,94,95,96,97;104;5;0;104;104;98;26;26,81,87,88,89,90,91,92,93,94;53;124;75;21;56;16,26,81,86,87,88,89,90,91,92,93,94,95,96,97;7,8;36;3;35;112;3;49;5,48;99;5,11;3;3,31;3;46,47;83,84;22;3;3;78";
 
-const $scriptletHostnames$ = /* 117 */ ["m6.fr","geo.fr","qub.ca","rtl.be","rtl.fr","tf1.fr","gala.fr","macg.co","rtl2.fr","20min.ch","7sur7.be","dhnet.be","radio.fr","voici.fr","9docu.org","actu17.fr","darkino.*","france.tv","japscan.*","playtv.fr","qwant.com","11anim.com","capital.fr","e-sushi.fr","japscan.me","planhub.ca","rtlplay.be","rustica.fr","skyrock.fr","sudinfo.be","tf1info.fr","tvaplus.ca","allocine.fr","bleachmx.fr","cinefil.com","ebookdz.com","funradio.fr","lemanip.com","malekal.com","pianoweb.fr","skyrock.com","sudouest.fr","systemed.fr","1jour1film.*","20minutes.fr","cookomix.com","gamekult.com","gentside.com","jeune-gay.fr","jtrouver.com","mac4ever.com","varmatin.com","abcbourse.com","adala-news.fr","basketusa.com","canalplus.com","hack-life.net","iphonesoft.fr","lessentiel.lu","monumentum.fr","nicematin.com","vostfr.stream","air-journal.fr","chat.babel.com","crunchyscan.fr","ecranlarge.com","iphonetweak.fr","justarrived.lu","magicmaman.com","marieclaire.fr","monacomatin.mc","monlatuque.com","rmcbfmplay.com","1jour1film.cyou","cosmopolitan.fr","coupdepouce.com","cyclismactu.net","empire-stream.*","hollywoodpq.com","lecrabeinfo.net","lindependant.fr","linternaute.com","recreatisse.com","supersoluce.com","voyageforum.com","empire-anime.com","femmeactuelle.fr","journaldunet.com","maxisciences.com","programme-tv.net","e-player-stream.*","empire-stream.net","empire-streamz.fr","jardiner-malin.fr","observalgerie.com","seriepourvous.com","super-ethanol.com","ultimate-catch.eu","empire-streaming.*","equinoxmagazine.fr","jaitoutcompris.com","meteo-grenoble.com","parlons-basket.com","techno-science.net","cliqueduplateau.com","commentcamarche.net","e-player-stream.app","journaldesfemmes.fr","lameteoagricole.net","signal-arnaques.com","animedigitalnetwork.fr","lecourrier-du-soir.com","occasions.decathlon.fr","benjaminellisbernard.fr","animationdigitalnetwork.fr","animationdigitalnetwork.com","player.melaniezettofrais.online"];
+const $scriptletHostnames$ = /* 120 */ ["m6.fr","geo.fr","qub.ca","rtl.be","rtl.fr","tf1.fr","gala.fr","macg.co","rtl2.fr","20min.ch","7sur7.be","dhnet.be","radio.fr","voici.fr","9docu.org","actu17.fr","darkino.*","france.tv","japscan.*","playtv.fr","qwant.com","11anim.com","capital.fr","e-sushi.fr","japscan.me","planhub.ca","rtlplay.be","rustica.fr","skyrock.fr","sudinfo.be","tf1info.fr","tvaplus.ca","allocine.fr","bleachmx.fr","cinefil.com","ebookdz.com","funradio.fr","lemanip.com","malekal.com","pianoweb.fr","skyrock.com","sudouest.fr","systemed.fr","1jour1film.*","20minutes.fr","cookomix.com","gamekult.com","gentside.com","jeune-gay.fr","jtrouver.com","mac4ever.com","varmatin.com","abcbourse.com","adala-news.fr","basketusa.com","canalplus.com","hack-life.net","iphonesoft.fr","lessentiel.lu","monumentum.fr","nakastream.tv","nicematin.com","vostfr.stream","air-journal.fr","chat.babel.com","crunchyscan.fr","ecranlarge.com","iphonetweak.fr","justarrived.lu","magicmaman.com","marieclaire.fr","monacomatin.mc","monlatuque.com","rmcbfmplay.com","1jour1film.cyou","cosmopolitan.fr","coupdepouce.com","cyclismactu.net","empire-stream.*","hollywoodpq.com","lecrabeinfo.net","lindependant.fr","linternaute.com","recreatisse.com","supersoluce.com","voyageforum.com","empire-anime.com","femmeactuelle.fr","journaldunet.com","journalduweb.org","maxisciences.com","programme-tv.net","e-player-stream.*","empire-stream.net","empire-streamz.fr","jardiner-malin.fr","observalgerie.com","seriepourvous.com","super-ethanol.com","ultimate-catch.eu","empire-streaming.*","equinoxmagazine.fr","jaitoutcompris.com","meteo-grenoble.com","parlons-basket.com","prod-player.tf1.fr","techno-science.net","cliqueduplateau.com","commentcamarche.net","e-player-stream.app","journaldesfemmes.fr","lameteoagricole.net","signal-arnaques.com","animedigitalnetwork.fr","lecourrier-du-soir.com","occasions.decathlon.fr","benjaminellisbernard.fr","animationdigitalnetwork.fr","animationdigitalnetwork.com","player.melaniezettofrais.online"];
 
 const $scriptletFromRegexes$ = /* 0 */ [];
 
@@ -1803,18 +1805,22 @@ const entries = (( ) => {
         const hn1 = origin.slice(beg+3)
         const end = hn1.indexOf(':');
         const hn2 = end === -1 ? hn1 : hn1.slice(0, end);
-        const hnParts = hn2.split('.');
         if ( hn2.length === 0 ) { return; }
-        const hns = [];
-        for ( let i = 0; i < hnParts.length; i++ ) {
-            hns.push(`${hnParts.slice(i).join('.')}`);
+        const hns = [ hn2 ];
+        for ( let pos = 0; ; ) {
+            pos = hn2.indexOf('.', pos) + 1;
+            if ( pos === 0 ) { break; }
+            hns.push(hn2.slice(pos));
         }
+        hns.push('*');
         const ens = [];
         if ( $hasEntities$ ) {
-            const n = hnParts.length - 1;
-            for ( let i = 0; i < n; i++ ) {
-                for ( let j = n; j > i; j-- ) {
-                    ens.push(`${hnParts.slice(i,j).join('.')}.*`);
+            for ( let hn of hns ) {
+                for (;;) {
+                    const pos = hn.lastIndexOf('.');
+                    if ( pos === -1 ) { break; }
+                    hn = hn.slice(0, pos);
+                    ens.push(`${hn}.*`);
                 }
             }
             ens.sort((a, b) => {
@@ -1824,55 +1830,55 @@ const entries = (( ) => {
             });
         }
         return { hns, ens, i };
-    }).filter(a => a !== undefined);
+    }).filter(a => a);
 })();
 if ( entries.length === 0 ) { return; }
 
-const collectArglistRefIndices = (out, hn, r) => {
-    let l = 0, i = 0, d = 0;
-    let candidate = '';
-    while ( l < r ) {
-        i = l + r >>> 1;
-        candidate = $scriptletHostnames$[i];
-        d = hn.length - candidate.length;
-        if ( d === 0 ) {
-            if ( hn === candidate ) {
-                out.add(i); break;
-            }
-            d = hn < candidate ? -1 : 1;
-        }
-        if ( d < 0 ) {
-            r = i;
-        } else {
-            l = i + 1;
-        }
-    }
-    return i;
-};
-
-const indicesFromHostname = (out, hnDetails, suffix = '') => {
-    if ( hnDetails.hns.length === 0 ) { return; }
-    let r = $scriptletHostnames$.length;
-    for ( const hn of hnDetails.hns ) {
-        r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
-    }
-    if ( $hasEntities$ ) {
-        let r = $scriptletHostnames$.length;
-        for ( const en of hnDetails.ens ) {
-            r = collectArglistRefIndices(out, `${en}${suffix}`, r);
-        }
-    }
-};
-
 const todoIndices = new Set();
-indicesFromHostname(todoIndices, entries[0]);
-if ( $hasAncestors$ ) {
-    for ( const entry of entries ) {
-        if ( entry.i === 0 ) { continue; }
-        indicesFromHostname(todoIndices, entry, '>>');
+if ( $scriptletHostnames$.length ) {
+    const collectArglistRefIndices = (out, hn, r) => {
+        let l = 0, i = 0, d = 0;
+        let candidate = '';
+        while ( l < r ) {
+            i = l + r >>> 1;
+            candidate = $scriptletHostnames$[i];
+            d = hn.length - candidate.length;
+            if ( d === 0 ) {
+                if ( hn === candidate ) {
+                    out.add(i); break;
+                }
+                d = hn < candidate ? -1 : 1;
+            }
+            if ( d < 0 ) {
+                r = i;
+            } else {
+                l = i + 1;
+            }
+        }
+        return i + 1;
+    };
+    const indicesFromHostname = (out, hnDetails, suffix = '') => {
+        if ( hnDetails.hns.length === 0 ) { return; }
+        let r = $scriptletHostnames$.length;
+        for ( const hn of hnDetails.hns ) {
+            r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
+        }
+        if ( $hasEntities$ ) {
+            let r = $scriptletHostnames$.length;
+            for ( const en of hnDetails.ens ) {
+                r = collectArglistRefIndices(out, `${en}${suffix}`, r);
+            }
+        }
+    };
+    indicesFromHostname(todoIndices, entries[0]);
+    if ( $hasAncestors$ ) {
+        for ( const entry of entries ) {
+            if ( entry.i === 0 ) { continue; }
+            indicesFromHostname(todoIndices, entry, '>>');
+        }
     }
+    $scriptletHostnames$.length = 0;
 }
-$scriptletHostnames$.length = 0;
 
 // Collect arglist references
 const todo = new Set();

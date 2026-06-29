@@ -1,3 +1,240 @@
+- [Excluded resource types must exclude `main_frame`
+](https://github.com/gorhill/uBlock/commit/a2ed727d21)
+- Updated filter lists
+
+----------
+
+### 2026.625.2148
+
+- [Fix improperly discarding trusted filters in mixed lists](https://github.com/gorhill/uBlock/commit/8dff81c5a0)
+- [Fix mismanagement of alarms potentially causing endless async loop](https://github.com/gorhill/uBlock/commit/e6f5b9a23a)
+- Updated filter lists
+
+----------
+
+### 2026.625.1633
+
+- [Exclude redirect resource `click2load.html`](https://github.com/gorhill/uBlock/commit/3bf5076f9b)
+- [Fix priority of `important` redirects in locally-compiled filters](https://github.com/gorhill/uBlock/commit/a532fb11cd)
+- [Add ability to view DNR rules of imported lists in "Develop" pane](https://github.com/gorhill/uBlock/commit/fedd40fde3)
+- [Compile imported lists using platform-specific resource types](https://github.com/gorhill/uBlock/commit/2803cf43c5)
+- [Fix multiple issues with imported lists feature](https://github.com/gorhill/uBlock/commit/1470ed462b)
+- [Support specific-generic cosmetic and scriptlet user filters](https://github.com/gorhill/uBlock/commit/b29f6667e3)
+- [Bring back "CERT.PL's Warning List"](https://github.com/gorhill/uBlock/commit/e46c59b792)
+- [Fix conversion of `csp=`/`permissions=` exception filters](https://github.com/gorhill/uBlock/commit/90a13ba3e7)
+- Updated filter lists
+
+----------
+
+### 2026.622.2316
+
+- [Distinguish between need to update filters and need to update user scripts](https://github.com/gorhill/uBlock/commit/ef84281e77)
+- [Fix regression when converting removeparam= filters to DNR rules](https://github.com/gorhill/uBlock/commit/9722c9e9cf)
+- [Fix broken rendering of final URL in strict-block page](https://github.com/gorhill/uBlock/commit/f934cfb94b)
+- [Imported lists are meant to work without requiring developer mode](https://github.com/gorhill/uBlock/commit/86532aa1b5)
+- Updated filter lists
+
+----------
+
+### 2026.621.2046
+
+- [Add missing `browser` import](https://github.com/gorhill/uBlock/commit/83f0c2b64a)
+- Updated filter lists
+
+----------
+
+### 2026.621.1813
+
+- [firefox] [Fix "Develop" editor being unscrollable](https://github.com/gorhill/uBlock/commit/b20f355278)
+- [Use alarms API to manage low-priority deferred tasks](https://github.com/gorhill/uBlock/commit/174012e57d)
+- [Manually check for userScripts permission changes](https://github.com/gorhill/uBlock/commit/bf405035a9)
+- [edge] [Remove the now possibly unnecessary patching of rulesets](https://github.com/gorhill/uBlock/commit/8839a9f7a8)
+- [Add ability to subscribe to filter lists from remote servers](https://github.com/gorhill/uBlock/commit/06deb19dfa)
+- Updated filter lists
+
+----------
+
+### 2026.614.1502
+
+- [Wrap troubleshooting info into `details` tag](https://github.com/gorhill/uBlock/commit/d86c0a0675)
+- [Fix conversion of `top=` option to DNR's `topDomains`](https://github.com/gorhill/uBlock/commit/560a59bd61)
+- [Add `popupBlockMode` to admin-controlled settings](https://github.com/gorhill/uBlock/commit/3806141043)
+- Updated filter lists
+
+----------
+
+### 2026.607.1724
+
+- [Fix test for header matching when using negated value](https://github.com/gorhill/uBlock/commit/fa027e219a)
+- [Fix binary search potentially not finding match in edge case](https://github.com/gorhill/uBlock/commit/bc5fa9fe9a)
+- [Show all dynamic/session rules in Develop pane](https://github.com/gorhill/uBlock/commit/c1cadb35d9)
+- [Prevent re-entrancy when compiling sandbox filters](https://github.com/gorhill/uBlock/commit/38eac0f0cb)
+- Updated filter lists
+
+----------
+
+### 2026.529.1448
+
+- [Add old-school filter editor for filter list authors](https://github.com/gorhill/uBlock/commit/2479484ba9)
+- [Merge content scripts related to specific and procedural cosmetic filters](https://github.com/gorhill/uBlock/commit/2eebc7579d)
+- Updated filter lists
+
+----------
+
+### 2026.516.1652
+
+- [safari] [Fix Icon and delete metadata](https://github.com/uBlockOrigin/uBOL-home/commit/a932799467) by [6c67b9](https://github.com/6c67b9)
+- [Bring popup blocking out of experimental status](https://github.com/gorhill/uBlock/commit/1083daaf82)
+- [Allow custom cosmetic filters in embedded contexts](https://github.com/gorhill/uBlock/commit/8574d7162d)
+- Updated filter lists
+
+----------
+
+### 2026.510.1607
+
+- [Fix potentially residual user styles when previewing custom filters](https://github.com/gorhill/uBlock/commit/cc56504273)
+- [Fix various quirks when previewing custom filters at creation time](https://github.com/gorhill/uBlock/commit/90e8212304)
+- Updated filter lists
+
+----------
+
+### 2026.507.2008
+
+- [Improve handling of manual editing of custom filters](https://github.com/gorhill/uBlock/commit/c2184441d8)
+- [Fix regression when editing custom cosmetic `#...` filters](https://github.com/gorhill/uBlock/commit/27dbdb202e)
+- [Improve contrast in dark mode](https://github.com/gorhill/uBlock/commit/7cd56887ff)
+- [Fix custom cosmetic filtering when pages load from "Preload Top Hit"](https://github.com/gorhill/uBlock/commit/19ebbe73b9)
+- Updated filter lists
+
+----------
+
+### 2026.504.2301
+
+- [safari] [Fix regression in custom procedural cosmetic filters](https://github.com/gorhill/uBlock/commit/532f897ea8)
+- Updated filter lists
+
+----------
+
+### 2026.504.1635
+
+- [safari] [Fix cosmetic filtering when pages load from "Preload Top Hit"](https://github.com/gorhill/uBlock/commit/01ff17fe64)
+- Updated filter lists
+
+----------
+
+### 2026.503.1521
+
+- [Do not prevent creation of custom filters with no matching elements](https://github.com/gorhill/uBlock/commit/2434b8adad)
+- [Fix support of CSS selectors with pseudo-elements in custom filters](https://github.com/gorhill/uBlock/commit/8e3c4c7f16)
+- [Add support for highly generic cosmetic filter exceptions](https://github.com/gorhill/uBlock/commit/e2df53d0de)
+- [Support copying/pasting custom filters](https://github.com/gorhill/uBlock/commit/11b749e0a3)
+- Updated filter lists
+
+----------
+
+### 2026.426.1536
+
+- [Fix various concurrency issues with "Restore" operation](https://github.com/gorhill/uBlock/commit/83c51b12b1)
+- [Fix export button in "Custom filters" pane](https://github.com/gorhill/uBlock/commit/d8558aa56b)
+- [Fix visual of "Remove a custom filter" for procedural filters](https://github.com/gorhill/uBlock/commit/bdc3bace25)
+- [Add `topDomains`/`excludedTopDomains` conditions to DNR parser](https://github.com/gorhill/uBlock/commit/06eeaa2685)
+- [Fix custom procedural filters when no ruleset enabled](https://github.com/gorhill/uBlock/commit/33dc8a7ff0)
+- [safari] [Remove icons from Safari manifest](https://github.com/gorhill/uBlock/commit/04b1058007) by [sebastianlivoni](https://github.com/sebastianlivoni)
+- Updated filter lists
+
+----------
+
+### 2026.422.1301
+
+- [regression] [Fix potentially broken custom cosmetic filters](https://github.com/gorhill/uBlock/commit/8f504f6edf)
+- [Add visual cue about invalid custom filters](https://github.com/gorhill/uBlock/commit/a7e2386219)
+- [Launch offscreen document only when there are `+js()` filters](https://github.com/gorhill/uBlock/commit/35f8dab29c)
+- Updated filter lists
+
+----------
+
+### 2026.419.1519
+
+- [Explicitly exclude no-filtering sites from custom filters](https://github.com/gorhill/uBlock/commit/9b76445e8e)
+- [Improve usability of "Custom filters" pane](https://github.com/gorhill/uBlock/commit/44d1eead39)
+- [Add aria-label attributes in filtering mode slider](https://github.com/gorhill/uBlock/commit/cf93f2864a)
+- [safari] [Upload new icons for Apple platform and delete old icons](https://github.com/uBlockOrigin/uBOL-home/commit/d5a1859e87) by [6c67b9](https://github.com/6c67b9)
+- [chromium] [Add support for custom scriptlet filters](https://github.com/gorhill/uBlock/commit/46852ebd6f)
+- Updated filter lists
+
+----------
+
+### 2026.412.1536
+
+- Updated filter lists
+
+----------
+
+### 2026.405.2010
+
+- [Fix `header=` conversion in custom DNR rules](https://github.com/gorhill/uBlock/commit/cfe54fc900)
+- Updated filter lists
+
+----------
+
+### 2026.329.1951
+
+- [Fix total count of DNR rules](https://github.com/gorhill/uBlock/commit/2bc251bcf9)
+- Updated filter lists
+
+----------
+
+### 2026.323.2044
+
+- [Fix regression leading to overzealous blocking](https://github.com/gorhill/uBlock/commit/751104a82c)
+- Updated filter lists
+
+----------
+
+### 2026.322.1735
+
+- [Add support for popup filtering](https://github.com/gorhill/uBlock/commit/12d7157d78)
+    - To be safe against potential regression, popup filtering will be enforced only with default filtering mode set to _complete_ for the time being. Once well-tested, the feature will be enabled in _optimal_ mode.
+- [safari] [Drop some lists from default rulesets](https://github.com/gorhill/uBlock/commit/8c5ddc08f9)
+- [safari] [Expand `requestDomains` rules into multiple `urlFilter` rules](https://github.com/gorhill/uBlock/commit/82f87420d2)
+- [Use low-priority "allow" rules for excepted modifier filters](https://github.com/gorhill/uBlock/commit/e7971e6bbd)
+- [Add missing call to re-register content scripts](https://github.com/gorhill/uBlock/commit/fcb1eeee17)
+- Updated filter lists
+
+----------
+
+### 2026.315.1814
+
+- Updated filter lists
+
+----------
+
+### 2026.308.1810
+
+- Updated filter lists
+
+----------
+
+### 2026.301.2014
+
+- Updated filter lists
+
+----------
+
+### 2026.222.1657
+
+- Updated filter lists
+
+----------
+
+### 2026.215.1801
+
+- Updated filter lists
+
+----------
+
+### 2026.211.2314
+
 - [Remove "Steven Black’s Unified Hosts" list](https://github.com/gorhill/uBlock/commit/8d9832b4d6)
 - Updated filter lists
 

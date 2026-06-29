@@ -157,7 +157,7 @@ function hrefSanitizer(
             if ( shouldSanitize ) { break; }
         }
         if ( shouldSanitize === false ) { return; }
-        timer = safe.onIdle(( ) => {
+        timer = onIdleFn(( ) => {
             timer = undefined;
             sanitize();
         });
@@ -171,6 +171,13 @@ function hrefSanitizer(
         });
     };
     runAt(( ) => { start(); }, 'interactive');
+}
+
+function onIdleFn(fn, options) {
+    if ( self.requestIdleCallback ) {
+        return self.requestIdleCallback(fn, options);
+    }
+    return self.requestAnimationFrame(fn);
 }
 
 function removeCookie(
@@ -504,18 +511,6 @@ function safeSelf() {
             }, []);
             return this.Object_fromEntries(entries);
         },
-        onIdle(fn, options) {
-            if ( self.requestIdleCallback ) {
-                return self.requestIdleCallback(fn, options);
-            }
-            return self.requestAnimationFrame(fn);
-        },
-        offIdle(id) {
-            if ( self.requestIdleCallback ) {
-                return self.cancelIdleCallback(id);
-            }
-            return self.cancelAnimationFrame(id);
-        }
     };
     scriptletGlobals.safeSelf = safe;
     if ( scriptletGlobals.bcSecret === undefined ) { return safe; }
@@ -854,13 +849,13 @@ const scriptletGlobals = {}; // eslint-disable-line
 const $scriptletFunctions$ = /* 5 */
 [hrefSanitizer,removeNodeText,setCookie,removeCookie,setLocalStorageItem];
 
-const $scriptletArgs$ = /* 44 */ ["a[href*=\"/t?a=\"]","?url","a[href*=\".io/c/\"]","?u","script","contextmenu","e.keyCode","CM_cookieConsent","0","noscript","/wccp_pro/","a[href*=\"/click\"]","a[href*=\"&amp;u\"]","?amp;u","a[href*=\"&ued=\"]","?ued","a[href*=\".pxf.io\"]","a[href*=\".sjv.io\"]","allow-marketing-cookies","cmplz_banner-status","dismissed","cmplz_functional","allow","cmplz_marketing","deny","cmplz_preferences","cmplz_statistics","e.preventDefault","a[href*=\"&cpdir\"]","?cpdir","a[href*=\"/idg.digidip.net/\"]","decodeURIComponent","/^ev_did|ev_sid/","$remove$","article_count","read_articles","wordpress_sezz_id","marketingConsent","false","necessaryConsent","true","personalisationConsent","request_ads_to_display","event.target.tagName"];
+const $scriptletArgs$ = /* 39 */ ["a[href*=\"/t?a=\"]","?url","a[href*=\".io/c/\"]","?u","script","contextmenu","e.keyCode","CM_cookieConsent","0","noscript","/wccp_pro/","a[href*=\"/click\"]","a[href*=\"&amp;u\"]","?amp;u","a[href*=\"&ued=\"]","?ued","a[href*=\".pxf.io\"]","a[href*=\".sjv.io\"]","allow-marketing-cookies","cmplz_banner-status","dismissed","cmplz_functional","allow","cmplz_marketing","deny","cmplz_preferences","cmplz_statistics","e.preventDefault","a[href*=\"&cpdir\"]","?cpdir","a[href*=\"/idg.digidip.net/\"]","decodeURIComponent","/^ev_did|ev_sid/","$remove$","article_count","read_articles","wordpress_sezz_id","request_ads_to_display","event.target.tagName"];
 
-const $scriptletArglists$ = /* 32 */ "0,0,1;0,2,3;1,4,5;1,4,6;2,7,8;1,9;1,4,10;0,11,1;0,12,13;0,14,15;0,16,3;0,17,3;2,18,8;2,19,20;2,21,22;2,23,24;2,25,24;2,26,24;1,4,27;0,28,29;0,30,1;1,4,31;3,32;4,32,33;3,34;3,35;3,36;4,37,38;4,39,40;4,41,38;1,4,42;1,4,43";
+const $scriptletArglists$ = /* 29 */ "0,0,1;0,2,3;1,4,5;1,4,6;2,7,8;1,9;1,4,10;0,11,1;0,12,13;0,14,15;0,16,3;0,17,3;2,18,8;2,19,20;2,21,22;2,23,24;2,25,24;2,26,24;1,4,27;0,28,29;0,30,1;1,4,31;3,32;4,32,33;3,34;3,35;3,36;1,4,37;1,4,38";
 
-const $scriptletArglistRefs$ = /* 42 */ "20;0,1,7;1;12;19;1;0,1;0;1;18;0;24,25,26;21;21;30;0;20;0,7,8,9,10,11;0;20;0,1;22,23;30;2,3;5,6;0;1;31;0;27,28,29;0;4;0;24,25,26;4;0,13,14,15,16,17;18;24,25,26;21;24,25,26;1;18";
+const $scriptletArglistRefs$ = /* 40 */ "20;0,1,7;1;12;19;1;0,1;1;18;0;24,25,26;21;21;27;0;20;0,7,8,9,10,11;0;20;0,1;22,23;27;2,3;5,6;0;1;28;0;0;4;0;24,25,26;4;0,13,14,15,16,17;18;24,25,26;21;24,25,26;1;18";
 
-const $scriptletHostnames$ = /* 42 */ ["m3.se","elle.se","hant.se","inet.se","leta.se","allas.se","femina.se","godare.se","mabra.com","norpan.se","rodeo.net","fempers.se","medibok.se","pilsner.nu","bio-link.se","byggahus.se","macworld.se","expressen.se","golflivet.se","pcforalla.se","svenskdam.se","synonymer.se","web-tools.se","byggipedia.se","dinbyggare.se","familjeliv.se","motherhood.se","spelhubben.se","vitaestilo.se","webhallen.com","aftonbladet.se","destination.se","galamagasin.se","landetsfria.nu","sistaminuten.se","inredningsvis.se","skrattsajten.com","tidningensyre.se","kandisvarlden.com","tidningenglobal.se","residencemagazine.se","internetodontologi.se"];
+const $scriptletHostnames$ = /* 40 */ ["m3.se","elle.se","hant.se","inet.se","leta.se","allas.se","femina.se","mabra.com","norpan.se","rodeo.net","fempers.se","medibok.se","pilsner.nu","bio-link.se","byggahus.se","macworld.se","expressen.se","golflivet.se","pcforalla.se","svenskdam.se","synonymer.se","web-tools.se","byggipedia.se","dinbyggare.se","familjeliv.se","motherhood.se","spelhubben.se","vitaestilo.se","aftonbladet.se","destination.se","galamagasin.se","landetsfria.nu","sistaminuten.se","inredningsvis.se","skrattsajten.com","tidningensyre.se","kandisvarlden.com","tidningenglobal.se","residencemagazine.se","internetodontologi.se"];
 
 const $scriptletFromRegexes$ = /* 0 */ [];
 
@@ -882,18 +877,22 @@ const entries = (( ) => {
         const hn1 = origin.slice(beg+3)
         const end = hn1.indexOf(':');
         const hn2 = end === -1 ? hn1 : hn1.slice(0, end);
-        const hnParts = hn2.split('.');
         if ( hn2.length === 0 ) { return; }
-        const hns = [];
-        for ( let i = 0; i < hnParts.length; i++ ) {
-            hns.push(`${hnParts.slice(i).join('.')}`);
+        const hns = [ hn2 ];
+        for ( let pos = 0; ; ) {
+            pos = hn2.indexOf('.', pos) + 1;
+            if ( pos === 0 ) { break; }
+            hns.push(hn2.slice(pos));
         }
+        hns.push('*');
         const ens = [];
         if ( $hasEntities$ ) {
-            const n = hnParts.length - 1;
-            for ( let i = 0; i < n; i++ ) {
-                for ( let j = n; j > i; j-- ) {
-                    ens.push(`${hnParts.slice(i,j).join('.')}.*`);
+            for ( let hn of hns ) {
+                for (;;) {
+                    const pos = hn.lastIndexOf('.');
+                    if ( pos === -1 ) { break; }
+                    hn = hn.slice(0, pos);
+                    ens.push(`${hn}.*`);
                 }
             }
             ens.sort((a, b) => {
@@ -903,55 +902,55 @@ const entries = (( ) => {
             });
         }
         return { hns, ens, i };
-    }).filter(a => a !== undefined);
+    }).filter(a => a);
 })();
 if ( entries.length === 0 ) { return; }
 
-const collectArglistRefIndices = (out, hn, r) => {
-    let l = 0, i = 0, d = 0;
-    let candidate = '';
-    while ( l < r ) {
-        i = l + r >>> 1;
-        candidate = $scriptletHostnames$[i];
-        d = hn.length - candidate.length;
-        if ( d === 0 ) {
-            if ( hn === candidate ) {
-                out.add(i); break;
-            }
-            d = hn < candidate ? -1 : 1;
-        }
-        if ( d < 0 ) {
-            r = i;
-        } else {
-            l = i + 1;
-        }
-    }
-    return i;
-};
-
-const indicesFromHostname = (out, hnDetails, suffix = '') => {
-    if ( hnDetails.hns.length === 0 ) { return; }
-    let r = $scriptletHostnames$.length;
-    for ( const hn of hnDetails.hns ) {
-        r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
-    }
-    if ( $hasEntities$ ) {
-        let r = $scriptletHostnames$.length;
-        for ( const en of hnDetails.ens ) {
-            r = collectArglistRefIndices(out, `${en}${suffix}`, r);
-        }
-    }
-};
-
 const todoIndices = new Set();
-indicesFromHostname(todoIndices, entries[0]);
-if ( $hasAncestors$ ) {
-    for ( const entry of entries ) {
-        if ( entry.i === 0 ) { continue; }
-        indicesFromHostname(todoIndices, entry, '>>');
+if ( $scriptletHostnames$.length ) {
+    const collectArglistRefIndices = (out, hn, r) => {
+        let l = 0, i = 0, d = 0;
+        let candidate = '';
+        while ( l < r ) {
+            i = l + r >>> 1;
+            candidate = $scriptletHostnames$[i];
+            d = hn.length - candidate.length;
+            if ( d === 0 ) {
+                if ( hn === candidate ) {
+                    out.add(i); break;
+                }
+                d = hn < candidate ? -1 : 1;
+            }
+            if ( d < 0 ) {
+                r = i;
+            } else {
+                l = i + 1;
+            }
+        }
+        return i + 1;
+    };
+    const indicesFromHostname = (out, hnDetails, suffix = '') => {
+        if ( hnDetails.hns.length === 0 ) { return; }
+        let r = $scriptletHostnames$.length;
+        for ( const hn of hnDetails.hns ) {
+            r = collectArglistRefIndices(out, `${hn}${suffix}`, r);
+        }
+        if ( $hasEntities$ ) {
+            let r = $scriptletHostnames$.length;
+            for ( const en of hnDetails.ens ) {
+                r = collectArglistRefIndices(out, `${en}${suffix}`, r);
+            }
+        }
+    };
+    indicesFromHostname(todoIndices, entries[0]);
+    if ( $hasAncestors$ ) {
+        for ( const entry of entries ) {
+            if ( entry.i === 0 ) { continue; }
+            indicesFromHostname(todoIndices, entry, '>>');
+        }
     }
+    $scriptletHostnames$.length = 0;
 }
-$scriptletHostnames$.length = 0;
 
 // Collect arglist references
 const todo = new Set();

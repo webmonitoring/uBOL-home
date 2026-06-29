@@ -18,7 +18,10 @@
   "requestDomains": [
    "askmiso.com",
    "cdn.gist.ai",
-   "widget.kapa.ai"
+   "gotolstoy.com",
+   "srv.divee.ai",
+   "widget.kapa.ai",
+   "widget.prod.equally.ai"
   ]
  },
  "id": 2,
@@ -39,9 +42,41 @@
   "type": "block"
  },
  "condition": {
-  "urlFilter": "||embed.chatnode.ai^"
+  "requestDomains": [
+   "chat.g4media.org",
+   "embed.chatnode.ai"
+  ]
  },
  "id": 4,
+ "priority": 10
+},
+{
+ "action": {
+  "type": "block"
+ },
+ "condition": {
+  "initiatorDomains": [
+   "nus.edu.sg"
+  ],
+  "resourceTypes": [
+   "script"
+  ],
+  "urlFilter": "||azurefd.net/cdns/copilot_v3.min.js"
+ },
+ "id": 5,
+ "priority": 10
+},
+{
+ "action": {
+  "type": "block"
+ },
+ "condition": {
+  "initiatorDomains": [
+   "support.whoop.com"
+  ],
+  "urlFilter": "||cdn.whoop.com/v0/chat/chat.js"
+ },
+ "id": 6,
  "priority": 10
 }
 ]
