@@ -1,5 +1,40 @@
-- [Excluded resource types must exclude `main_frame`
-](https://github.com/gorhill/uBlock/commit/a2ed727d21)
+- [Add support to move stock lists to imported lists](https://github.com/gorhill/uBlock/commit/64deacc98c)
+- [Hide list group which have no list](https://github.com/gorhill/uBlock/commit/52e66ff81a)
+- Updated filter lists
+
+----------
+
+### 2026.714.1952
+
+- Updated filter lists
+
+----------
+
+### 2026.713.1408
+
+- [Cache fetched lists on a per platform basis](https://github.com/gorhill/uBlock/commit/031b52ba4d)
+- Updated filter lists
+
+----------
+
+### 2026.711.25
+
+- [Add support for excluded hostnames in `popup` filters](https://github.com/gorhill/uBlock/commit/0d0f4d6406)
+- [Fix processing of preparse directives in imported lists](https://github.com/gorhill/uBlock/commit/4dae710c34)
+- Updated filter lists
+
+----------
+
+### 2026.705.2152
+
+- [Discard rules with `topDomains` condition when not supported](https://github.com/gorhill/uBlock/commit/993d42c374)
+- Updated filter lists
+
+----------
+
+### 2026.628.2035
+
+- [Excluded resource types must exclude `main_frame`](https://github.com/gorhill/uBlock/commit/a2ed727d21)
 - Updated filter lists
 
 ----------

@@ -47,28 +47,7 @@ function abortCurrentScriptFn(
     const logPrefix = safe.makeLogPrefix('abort-current-script', target, needle, context);
     const reNeedle = safe.patternToRegex(needle);
     const reContext = safe.patternToRegex(context);
-    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     const thisScript = document.currentScript;
-    const chain = safe.String_split.call(target, '.');
-    let owner = window;
-    let prop;
-    for (;;) {
-        prop = chain.shift();
-        if ( chain.length === 0 ) { break; }
-        if ( prop in owner === false ) { break; }
-        owner = owner[prop];
-        if ( owner instanceof Object === false ) { return; }
-    }
-    let value;
-    let desc = Object.getOwnPropertyDescriptor(owner, prop);
-    if (
-        desc instanceof Object === false ||
-        desc.get instanceof Function === false
-    ) {
-        value = owner[prop];
-        desc = undefined;
-    }
-    const debug = shouldDebug(extraArgs);
     const exceptionToken = getExceptionTokenFn();
     const scriptTexts = new WeakMap();
     const textContentGetter = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent').get;
@@ -76,8 +55,7 @@ function abortCurrentScriptFn(
         let text = textContentGetter.call(elem);
         if ( text.trim() !== '' ) { return text; }
         if ( scriptTexts.has(elem) ) { return scriptTexts.get(elem); }
-        const [ , mime, content ] =
-            /^data:([^,]*),(.+)$/.exec(elem.src.trim()) ||
+        const [ , mime, content ] = /^data:([^,]*),(.+)$/.exec(elem.src.trim()) ||
             [ '', '', '' ];
         try {
             switch ( true ) {
@@ -97,50 +75,28 @@ function abortCurrentScriptFn(
         const e = document.currentScript;
         if ( e instanceof HTMLScriptElement === false ) { return; }
         if ( e === thisScript ) { return; }
-        if ( context !== '' && reContext.test(e.src) === false ) {
-            // eslint-disable-next-line no-debugger
-            if ( debug === 'nomatch' || debug === 'all' ) { debugger; }
-            return;
-        }
+        if ( context !== '' && reContext.test(e.src) === false ) { return; }
         if ( safe.logLevel > 1 && context !== '' ) {
             safe.uboLog(logPrefix, `Matched src\n${e.src}`);
         }
         const scriptText = getScriptText(e);
-        if ( reNeedle.test(scriptText) === false ) {
-            // eslint-disable-next-line no-debugger
-            if ( debug === 'nomatch' || debug === 'all' ) { debugger; }
-            return;
-        }
+        if ( reNeedle.test(scriptText) === false ) { return; }
         if ( safe.logLevel > 1 ) {
             safe.uboLog(logPrefix, `Matched text\n${scriptText}`);
         }
-        // eslint-disable-next-line no-debugger
-        if ( debug === 'match' || debug === 'all' ) { debugger; }
         safe.uboLog(logPrefix, 'Aborted');
         throw new ReferenceError(exceptionToken);
     };
-    // eslint-disable-next-line no-debugger
-    if ( debug === 'install' ) { debugger; }
-    try {
-        Object.defineProperty(owner, prop, {
-            get: function() {
-                validate();
-                return desc instanceof Object
-                    ? desc.get.call(owner)
-                    : value;
-            },
-            set: function(a) {
-                validate();
-                if ( desc instanceof Object ) {
-                    desc.set.call(owner, a);
-                } else {
-                    value = a;
-                }
-            }
-        });
-    } catch(ex) {
-        safe.uboErr(logPrefix, `Error: ${ex}`);
-    }
+    let currentValue = trapPropertyFn(target, {
+        get: function() {
+            validate();
+            return currentValue;
+        },
+        set: function(a) {
+            validate();
+            currentValue = a;
+        }
+    }, { canThrow: true });
 }
 
 function abortOnPropertyRead(
@@ -729,22 +685,23 @@ function preventAddEventListener(
         }
         return context.reflect();
     };
+    const protect = owner => {
+        const { addEventListener } = owner;
+        Object.defineProperty(owner, 'addEventListener', {
+            set() { },
+            get() { return addEventListener; }
+        });
+    };
     runAt(( ) => {
         proxyApplyFn('EventTarget.prototype.addEventListener', proxyFn);
-        if ( extraArgs.protect ) {
-            const { addEventListener } = EventTarget.prototype;
-            Object.defineProperty(EventTarget.prototype, 'addEventListener', {
-                set() { },
-                get() { return addEventListener; }
-            });
+        if ( extraArgs.protect ) { protect(EventTarget.prototype); }
+        if ( Object.hasOwn(document, 'addEventListener') ) {
+            proxyApplyFn('document.addEventListener', proxyFn);
+            if ( extraArgs.protect ) { protect(document); }
         }
-        proxyApplyFn('document.addEventListener', proxyFn);
-        if ( extraArgs.protect ) {
-            const { addEventListener } = document;
-            Object.defineProperty(document, 'addEventListener', {
-                set() { },
-                get() { return addEventListener; }
-            });
+        if ( Object.hasOwn(window, 'addEventListener') ) {
+            proxyApplyFn('window.addEventListener', proxyFn);
+            if ( extraArgs.protect ) { protect(window); }
         }
     }, extraArgs.runAt);
 }
@@ -897,20 +854,22 @@ function proxyApplyFn(
         };
         proxyApplyFn.isCtor = new Map();
         proxyApplyFn.proxies = new WeakMap();
-        proxyApplyFn.nativeToString = Function.prototype.toString;
-        const proxiedToString = new Proxy(Function.prototype.toString, {
-            apply(target, thisArg) {
-                let proxied = thisArg;
-                for(;;) {
-                    const fn = proxyApplyFn.proxies.get(proxied);
-                    if ( fn === undefined ) { break; }
-                    proxied = fn;
+        if ( proxyApplyFn.skipToString !== true ) {
+            proxyApplyFn.nativeToString = Function.prototype.toString;
+            const proxiedToString = new Proxy(Function.prototype.toString, {
+                apply(target, thisArg) {
+                    let proxied = thisArg;
+                    for(;;) {
+                        const fn = proxyApplyFn.proxies.get(proxied);
+                        if ( fn === undefined ) { break; }
+                        proxied = fn;
+                    }
+                    return proxyApplyFn.nativeToString.call(proxied);
                 }
-                return proxyApplyFn.nativeToString.call(proxied);
-            }
-        });
-        proxyApplyFn.proxies.set(proxiedToString, proxyApplyFn.nativeToString);
-        Function.prototype.toString = proxiedToString;
+            });
+            proxyApplyFn.proxies.set(proxiedToString, proxyApplyFn.nativeToString);
+            Function.prototype.toString = proxiedToString;
+        }
     }
     if ( proxyApplyFn.isCtor.has(target) === false ) {
         proxyApplyFn.isCtor.set(target, fn.prototype?.constructor === fn);
@@ -1044,8 +1003,8 @@ function runAtHtmlElementFn(fn) {
 }
 
 function safeSelf() {
-    if ( scriptletGlobals.safeSelf ) {
-        return scriptletGlobals.safeSelf;
+    if ( safeSelf.safe ) {
+        return safeSelf.safe;
     }
     const self = globalThis;
     const safe = {
@@ -1164,7 +1123,7 @@ function safeSelf() {
             return this.Object_fromEntries(entries);
         },
     };
-    scriptletGlobals.safeSelf = safe;
+    safeSelf.safe = safe;
     if ( scriptletGlobals.bcSecret === undefined ) { return safe; }
     // This is executed only when the logger is opened
     safe.logLevel = scriptletGlobals.logLevel || 1;
@@ -1378,9 +1337,77 @@ function setConstantFn(
     }, extraArgs.runAt);
 }
 
-function shouldDebug(details) {
-    if ( details instanceof Object === false ) { return false; }
-    return scriptletGlobals.canDebug && details.debug;
+function trapPropertyFn(propChain, handler, options = {}) {
+    if ( propChain === '' ) { return; }
+    let owner = self;
+    let prop = propChain;
+    for (;;) {
+        const pos = prop.indexOf('.');
+        if ( pos === -1 ) { break; }
+        owner = owner[prop.slice(0, pos)];
+        if ( owner instanceof Object === false ) { return; }
+        prop = prop.slice(pos + 1);
+    }
+    const safe = safeSelf();
+    if ( trapPropertyFn.db === undefined ) {
+        trapPropertyFn.db = new WeakMap();
+        trapPropertyFn.entryFromContext = (owner, prop) => {
+            const handlers = trapPropertyFn.db.get(owner);
+            return handlers?.get(prop);
+        };
+        trapPropertyFn.getter = (owner, prop) => {
+            const entry = trapPropertyFn.entryFromContext(owner, prop);
+            if ( entry === undefined ) { return; }
+            let r = entry.value;
+            for ( const desc of entry.stack ) {
+                try { r = desc.get(); } catch (e) {
+                    if ( entry.canThrow ) { throw e; }
+                }
+            }
+            return r;
+        };
+        trapPropertyFn.setter = (owner, prop, value) => {
+            const entry = trapPropertyFn.entryFromContext(owner, prop);
+            if ( entry === undefined ) { return; }
+            entry.value = value;
+            for ( const desc of entry.stack ) {
+                try { desc.set(value); } catch (e) {
+                    if ( entry.canThrow ) { throw e; }
+                }
+            }
+        };
+    }
+    const { db } = trapPropertyFn;
+    const handlers = db.get(owner) || new Map();
+    if ( handlers.size === 0 ) {
+        db.set(owner, handlers);
+    }
+    const entry = handlers.get(prop) || {
+        value: owner[prop],
+        stack: [],
+    };
+    entry.stack.push(handler);
+    if ( entry.stack.length > 1 ) { return entry.value; }
+    Object.assign(entry, options);
+    handlers.set(prop, entry);
+    const desc = safe.Object_getOwnPropertyDescriptor(owner, prop);
+    if ( desc instanceof safe.Object ) {
+        if ( desc.get || desc.set ) {
+            entry.stack.push(desc);
+        }
+    }
+    try {
+        safe.Object_defineProperty(owner, prop, {
+            get() {
+                return trapPropertyFn.getter(owner, prop);
+            },
+            set(value) {
+                trapPropertyFn.setter(owner, prop, value);
+            }
+        });
+    } catch {
+    }
+    return entry.value;
 }
 
 function validateConstantFn(trusted, raw, extraArgs = {}) {
@@ -1439,19 +1466,7 @@ function validateConstantFn(trusted, raw, extraArgs = {}) {
 
 const scriptletGlobals = {}; // eslint-disable-line
 
-const $scriptletFunctions$ = /* 9 */
-[abortOnPropertyRead,preventFetch,abortCurrentScript,jsonPrune,setConstant,noWindowOpenIf,removeAttr,abortOnPropertyWrite,preventAddEventListener];
-
-const $scriptletArgs$ = /* 35 */ ["SIN.AdsLoader","pagead2.googlesyndication.com","adsBlocked","String.fromCharCode","/\\/\\*[0-9a-f]{40}\\*\\//","vast","jQuery","link_br","wpsite_clickable_data","u_global_data","ads_script","utarget_script","document.createElement","/загрузка/","amodule.data","[]","td_ad_background_click_link","undefined","parent.window.opener","/\\/special\\//","href",".ban_head","document.currentScript","admitad","/Function\\('return/","decodeURIComponent","delete window","script.onerror","eval","document.getElementsByTagName","html_brain_link","MarketGidJSON","fpm_adbDetect","DOMContentLoaded","/linkUrl|loadBanner/"];
-
-const $scriptletArglists$ = /* 25 */ "0,0;1,1;0,2;2,3,4;3,5;2,6,7;0,8;0,9;0,10;2,9;0,11;2,12,13;4,14,15;4,16,17;0,18;5,19;6,20,21;2,22,23;2,3,24;2,25,26;2,27,28;2,29,30;2,31;7,32;8,33,34";
-
-const $scriptletArglistRefs$ = /* 164 */ "7,9;7;5,15;7;7;11;11;11;23;23;7;11;11;14;11;11;11;11;23;3;23;11;7,9;11;18;23;23;3;23;19;23;7;10;7;11;11;23;23;4;23;11;11;11;3;23;23;3;11;10;11;7;11;11;11;23;11;23;6,24;11,20,21;23;11;7;23;17;7;23;23;11;7;0;7;11;11;11;1;23;23;23;10;11;23;22;11;23;23;11;7;1;11;23;23;8;11;11;11;11;11;23;7;23;11;7;11;23;23;23;23;23;11;23;11;23;11;6,24;23;11;11;23;11;3;23;11;23;11;11;11;11;7;16;2;11;23;23;23;23;11;23;7,8;23;23;11;23;11;13;23;23;7;7;11;3;7;11;23;23;11;7;7;11;6;11;23;12;23;23";
-
-const $scriptletHostnames$ = /* 164 */ ["at.ua","do.am","ain.ua","moy.su","my1.ru","ogo.ua","sud.ua","zik.ua","azku.ru","bouw.ru","clan.su","elle.ua","grad.ua","silf.ua","tele.ru","viva.ua","womo.ua","4mama.ua","d-mod.ru","dengi.ua","diwis.ru","fakty.ua","narod.ru","vlast.kz","www.i.ua","13idei.ru","colady.ru","ex-fs.net","iklife.ru","isport.ua","ixtira.tv","jetvis.ru","kinogo.eu","kubik3.ru","kursiv.kz","molbuk.ua","oblcit.ru","toysew.ru","aniqit.com","anisima.ru","bagnet.org","cbn.com.ua","glavnoe.ua","hvylya.net","kopomko.ru","lumpics.ru","mirknig.su","newsua.one","nnmclub.to","nr2.com.ua","rub.org.ua","rusjev.net","sibkray.ru","unn.com.ua","usatiki.ru","zikua.news","3witcher.ru","agronews.ua","comments.ua","dooralei.ru","golos.te.ua","igrul-ka.ru","it-doc.info","kurs.com.ua","megomult.ru","menstois.ru","mydizajn.ru","pingvin.pro","selezen.net","sinoptik.ua","staroetv.su","teren.in.ua","times.km.ua","womanel.com","1plus1.video","baragozik.ru","brjunetka.ru","catfishes.ru","doramakun.ru","enovosty.com","ethnoboho.ru","freerutor.me","glavpost.com","idealsad.com","kulikavto.ru","newsoneua.tv","paravozik.tv","plus-plus.tv","provce.ck.ua","rusadmin.biz","subsidii.net","tapochek.net","tverigrad.ru","versii.if.ua","altyn-orda.kz","cikavosti.com","fainaidea.com","glav-dacha.ru","greenflash.su","guitarrist.ru","livekavkaz.ru","play-force.ru","procherk.info","rainbowsky.ru","rugraphics.ru","sam-sdelay.ru","sdelaicomp.ru","telefongid.ru","tenews.org.ua","viborprost.ru","vsviti.com.ua","zakonguru.com","4studio.com.ua","agroreview.com","antirodinka.ru","cheline.com.ua","dv-gazeta.info","info-effect.ru","kapital-rus.ru","kino-hd720.net","love-mother.ru","marieclaire.ua","megabitcomp.ru","mignews.com.ua","otvetnavse.com","plitkar.com.ua","portal.lviv.ua","pro-zakupki.ru","proagro.com.ua","prozoro.net.ua","redpost.com.ua","samelectrik.ru","snow-motion.ru","sprintotvet.ru","tehnika.expert","telegraf.in.ua","windowstune.ru","fanofnfs.3dn.ru","fitnavigator.ru","historynotes.ru","news.dks.com.ua","privivkainfo.ru","rivnepost.rv.ua","root-nation.com","russkiiyazyk.ru","serviceyard.net","tc-image.3dn.ru","elektronika56.ru","gorodkiev.com.ua","kino-fs.ucoz.net","kino-torrent.net","rivnenews.com.ua","selfmadetrip.com","svoimi-rykami.ru","volyninfa.com.ua","pokatushki-pmr.ru","legion-rus.clan.su","politnavigator.net","classicalmusicnews.ru","prichernomorie.com.ua","ustroim-prazdnik.info","cosmonova-broadcast.tv","sekreti-domovodstva.ru","programdownloadfree.com"];
-
-const $scriptletFromRegexes$ = /* 0 */ [];
-
+const $hasHostnames$ = true;
 const $hasEntities$ = false;
 const $hasAncestors$ = false;
 const $hasRegexes$ = false;
@@ -1500,7 +1515,8 @@ const entries = (( ) => {
 if ( entries.length === 0 ) { return; }
 
 const todoIndices = new Set();
-if ( $scriptletHostnames$.length ) {
+if ( $hasHostnames$ ) {
+    const $scriptletHostnames$ = /* 164 */ ["at.ua","do.am","ain.ua","moy.su","my1.ru","ogo.ua","sud.ua","zik.ua","azku.ru","bouw.ru","clan.su","elle.ua","grad.ua","silf.ua","tele.ru","viva.ua","womo.ua","4mama.ua","d-mod.ru","dengi.ua","diwis.ru","fakty.ua","narod.ru","vlast.kz","www.i.ua","13idei.ru","colady.ru","ex-fs.net","iklife.ru","isport.ua","ixtira.tv","jetvis.ru","kinogo.eu","kubik3.ru","kursiv.kz","molbuk.ua","oblcit.ru","toysew.ru","aniqit.com","anisima.ru","bagnet.org","cbn.com.ua","glavnoe.ua","hvylya.net","kopomko.ru","lumpics.ru","mirknig.su","newsua.one","nnmclub.to","nr2.com.ua","rub.org.ua","rusjev.net","sibkray.ru","unn.com.ua","usatiki.ru","zikua.news","3witcher.ru","agronews.ua","comments.ua","dooralei.ru","golos.te.ua","igrul-ka.ru","it-doc.info","kurs.com.ua","megomult.ru","menstois.ru","mydizajn.ru","pingvin.pro","selezen.net","sinoptik.ua","staroetv.su","teren.in.ua","times.km.ua","womanel.com","1plus1.video","baragozik.ru","brjunetka.ru","catfishes.ru","doramakun.ru","enovosty.com","ethnoboho.ru","freerutor.me","glavpost.com","idealsad.com","kulikavto.ru","newsoneua.tv","paravozik.tv","plus-plus.tv","provce.ck.ua","rusadmin.biz","subsidii.net","tapochek.net","tverigrad.ru","versii.if.ua","altyn-orda.kz","cikavosti.com","fainaidea.com","glav-dacha.ru","greenflash.su","guitarrist.ru","livekavkaz.ru","play-force.ru","procherk.info","rainbowsky.ru","rugraphics.ru","sam-sdelay.ru","sdelaicomp.ru","telefongid.ru","tenews.org.ua","viborprost.ru","vsviti.com.ua","zakonguru.com","4studio.com.ua","agroreview.com","antirodinka.ru","cheline.com.ua","dv-gazeta.info","info-effect.ru","kapital-rus.ru","kino-hd720.net","love-mother.ru","marieclaire.ua","megabitcomp.ru","mignews.com.ua","otvetnavse.com","plitkar.com.ua","portal.lviv.ua","pro-zakupki.ru","proagro.com.ua","prozoro.net.ua","redpost.com.ua","samelectrik.ru","snow-motion.ru","sprintotvet.ru","tehnika.expert","telegraf.in.ua","windowstune.ru","fanofnfs.3dn.ru","fitnavigator.ru","historynotes.ru","news.dks.com.ua","privivkainfo.ru","rivnepost.rv.ua","root-nation.com","russkiiyazyk.ru","serviceyard.net","tc-image.3dn.ru","elektronika56.ru","gorodkiev.com.ua","kino-fs.ucoz.net","kino-torrent.net","rivnenews.com.ua","selfmadetrip.com","svoimi-rykami.ru","volyninfa.com.ua","pokatushki-pmr.ru","legion-rus.clan.su","politnavigator.net","classicalmusicnews.ru","prichernomorie.com.ua","ustroim-prazdnik.info","cosmonova-broadcast.tv","sekreti-domovodstva.ru","programdownloadfree.com"];
     const collectArglistRefIndices = (out, hn, r) => {
         let l = 0, i = 0, d = 0;
         let candidate = '';
@@ -1542,12 +1558,12 @@ if ( $scriptletHostnames$.length ) {
             indicesFromHostname(todoIndices, entry, '>>');
         }
     }
-    $scriptletHostnames$.length = 0;
 }
 
 // Collect arglist references
 const todo = new Set();
 if ( todoIndices.size !== 0 ) {
+    const $scriptletArglistRefs$ = /* 164 */ "7,9;7;5,15;7;7;11;11;11;23;23;7;11;11;14;11;11;11;11;23;3;23;11;7,9;11;18;23;23;3;23;19;23;7;10;7;11;11;23;23;4;23;11;11;11;3;23;23;3;11;10;11;7;11;11;11;23;11;23;6,24;11,20,21;23;11;7;23;17;7;23;23;11;7;0;7;11;11;11;1;23;23;23;10;11;23;22;11;23;23;11;7;1;11;23;23;8;11;11;11;11;11;23;7;23;11;7;11;23;23;23;23;23;11;23;11;23;11;6,24;23;11;11;23;11;3;23;11;23;11;11;11;11;7;16;2;11;23;23;23;23;11;23;7,8;23;23;11;23;11;13;23;23;7;7;11;3;7;11;23;23;11;7;7;11;6;11;23;12;23;23";
     const arglistRefs = $scriptletArglistRefs$.split(';');
     for ( const i of todoIndices ) {
         for ( const ref of JSON.parse(`[${arglistRefs[i]}]`) ) {
@@ -1556,6 +1572,7 @@ if ( todoIndices.size !== 0 ) {
     }
 }
 if ( $hasRegexes$ ) {
+    const $scriptletFromRegexes$ = /* 0 */ [];
     const { hns } = entries[0];
     for ( let i = 0, n = $scriptletFromRegexes$.length; i < n; i += 3 ) {
         const needle = $scriptletFromRegexes$[i+0];
@@ -1576,6 +1593,10 @@ if ( todo.size === 0 ) { return; }
 
 // Execute scriplets
 {
+    const $scriptletFunctions$ = /* 9 */
+[abortOnPropertyRead,preventFetch,abortCurrentScript,jsonPrune,setConstant,noWindowOpenIf,removeAttr,abortOnPropertyWrite,preventAddEventListener];
+    const $scriptletArgs$ = /* 35 */ ["SIN.AdsLoader","pagead2.googlesyndication.com","adsBlocked","String.fromCharCode","/\\/\\*[0-9a-f]{40}\\*\\//","vast","jQuery","link_br","wpsite_clickable_data","u_global_data","ads_script","utarget_script","document.createElement","/загрузка/","amodule.data","[]","td_ad_background_click_link","undefined","parent.window.opener","/\\/special\\//","href",".ban_head","document.currentScript","admitad","/Function\\('return/","decodeURIComponent","delete window","script.onerror","eval","document.getElementsByTagName","html_brain_link","MarketGidJSON","fpm_adbDetect","DOMContentLoaded","/linkUrl|loadBanner/"];
+    const $scriptletArglists$ = /* 25 */ "0,0;1,1;0,2;2,3,4;3,5;2,6,7;0,8;0,9;0,10;2,9;0,11;2,12,13;4,14,15;4,16,17;0,18;5,19;6,20,21;2,22,23;2,3,24;2,25,26;2,27,28;2,29,30;2,31;7,32;8,33,34";
     const arglists = $scriptletArglists$.split(';');
     const args = $scriptletArgs$;
     for ( const ref of todo ) {
